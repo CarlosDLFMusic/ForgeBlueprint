@@ -14,263 +14,6 @@
         WindowStartupLocation="CenterScreen">
 
     <Window.Resources>
-
-        <!-- SCROLLBARS -->
-        <Style x:Key="ScrollBarButtonStyle" TargetType="RepeatButton">
-            <Setter Property="Focusable" Value="False"/>
-            <Setter Property="IsTabStop" Value="False"/>
-            <Setter Property="Opacity" Value="0"/>
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="RepeatButton">
-                        <Border Background="Transparent"/>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <Style x:Key="RoundedScrollThumbStyle" TargetType="Thumb">
-            <Setter Property="Background" Value="{DynamicResource ScrollThumbBrush}" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Thumb">
-                        <Border x:Name="ThumbBorder"
-                                Margin="0"
-                                CornerRadius="5"
-                                Background="{TemplateBinding Background}" />
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="ThumbBorder"
-                                        Property="Background"
-                                        Value="{DynamicResource ScrollThumbHoverBrush}" />
-                            </Trigger>
-                            <Trigger Property="IsDragging" Value="True">
-                                <Setter TargetName="ThumbBorder"
-                                        Property="Background"
-                                        Value="{DynamicResource AccentBrushStrong}" />
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <ControlTemplate x:Key="VerticalScrollBarTemplate" TargetType="{x:Type ScrollBar}">
-            <Grid Width="12" Background="Transparent">
-                <Border Width="8"
-                        HorizontalAlignment="Center"
-                        Background="{DynamicResource ScrollTrackBrush}"
-                        CornerRadius="4" />
-                <Track x:Name="PART_Track"
-                       IsDirectionReversed="True"
-                       Focusable="False"
-                       Minimum="{TemplateBinding Minimum}"
-                       Maximum="{TemplateBinding Maximum}"
-                       Value="{TemplateBinding Value}"
-                       ViewportSize="{TemplateBinding ViewportSize}">
-                    <Track.DecreaseRepeatButton>
-                        <RepeatButton Style="{StaticResource ScrollBarButtonStyle}"
-                                      Command="ScrollBar.PageUpCommand" />
-                    </Track.DecreaseRepeatButton>
-                    <Track.Thumb>
-                        <Thumb Style="{StaticResource RoundedScrollThumbStyle}"
-                               MinHeight="36" />
-                    </Track.Thumb>
-                    <Track.IncreaseRepeatButton>
-                        <RepeatButton Style="{StaticResource ScrollBarButtonStyle}"
-                                      Command="ScrollBar.PageDownCommand" />
-                    </Track.IncreaseRepeatButton>
-                </Track>
-            </Grid>
-        </ControlTemplate>
-
-        <ControlTemplate x:Key="HorizontalScrollBarTemplate" TargetType="{x:Type ScrollBar}">
-            <Grid Height="12" Background="Transparent">
-                <Border Height="8"
-                        VerticalAlignment="Center"
-                        Background="{DynamicResource ScrollTrackBrush}"
-                        CornerRadius="4" />
-                <Track x:Name="PART_Track"
-                       Focusable="False"
-                       Minimum="{TemplateBinding Minimum}"
-                       Maximum="{TemplateBinding Maximum}"
-                       Value="{TemplateBinding Value}"
-                       ViewportSize="{TemplateBinding ViewportSize}">
-                    <Track.DecreaseRepeatButton>
-                        <RepeatButton Style="{StaticResource ScrollBarButtonStyle}"
-                                      Command="ScrollBar.PageLeftCommand" />
-                    </Track.DecreaseRepeatButton>
-                    <Track.Thumb>
-                        <Thumb Style="{StaticResource RoundedScrollThumbStyle}"
-                               MinWidth="36" />
-                    </Track.Thumb>
-                    <Track.IncreaseRepeatButton>
-                        <RepeatButton Style="{StaticResource ScrollBarButtonStyle}"
-                                      Command="ScrollBar.PageRightCommand" />
-                    </Track.IncreaseRepeatButton>
-                </Track>
-            </Grid>
-        </ControlTemplate>
-
-        <Style TargetType="{x:Type ScrollBar}">
-            <Setter Property="OverridesDefaultStyle" Value="True" />
-            <Setter Property="SnapsToDevicePixels" Value="True" />
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="Width" Value="12" />
-            <Setter Property="Height" Value="12" />
-            <Setter Property="Template" Value="{StaticResource VerticalScrollBarTemplate}" />
-            <Style.Triggers>
-                <Trigger Property="Orientation" Value="Horizontal">
-                    <Setter Property="Template" Value="{StaticResource HorizontalScrollBarTemplate}" />
-                </Trigger>
-            </Style.Triggers>
-        </Style>
-
-        <Style x:Key="VerticalStyledScrollBar" TargetType="{x:Type ScrollBar}">
-            <Setter Property="OverridesDefaultStyle" Value="True" />
-            <Setter Property="SnapsToDevicePixels" Value="True" />
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="Width" Value="12" />
-            <Setter Property="Template" Value="{StaticResource VerticalScrollBarTemplate}" />
-        </Style>
-
-        <Style x:Key="HorizontalStyledScrollBar" TargetType="{x:Type ScrollBar}">
-            <Setter Property="OverridesDefaultStyle" Value="True" />
-            <Setter Property="SnapsToDevicePixels" Value="True" />
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="Height" Value="12" />
-            <Setter Property="Template" Value="{StaticResource HorizontalScrollBarTemplate}" />
-        </Style>
-
-        <Style x:Key="PrettyScrollViewerStyle" TargetType="{x:Type ScrollViewer}">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="Padding" Value="0,0,6,0" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="{x:Type ScrollViewer}">
-                        <Grid Background="{TemplateBinding Background}">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="*" />
-                                <RowDefinition Height="Auto" />
-                            </Grid.RowDefinitions>
-
-                            <ScrollContentPresenter x:Name="PART_ScrollContentPresenter"
-                                                    Grid.Row="0"
-                                                    Grid.Column="0"
-                                                    Margin="{TemplateBinding Padding}"
-                                                    CanContentScroll="{TemplateBinding CanContentScroll}"
-                                                    Content="{TemplateBinding Content}"
-                                                    ContentTemplate="{TemplateBinding ContentTemplate}" />
-
-                            <ScrollBar x:Name="PART_VerticalScrollBar"
-                                       Grid.Row="0"
-                                       Grid.Column="1"
-                                       Margin="6,0,0,0"
-                                       Orientation="Vertical"
-                                       Minimum="0"
-                                       Maximum="{TemplateBinding ScrollableHeight}"
-                                       ViewportSize="{TemplateBinding ViewportHeight}"
-                                       Value="{Binding VerticalOffset, RelativeSource={RelativeSource TemplatedParent}, Mode=OneWay}"
-                                       Visibility="{TemplateBinding ComputedVerticalScrollBarVisibility}"
-                                       Style="{StaticResource VerticalStyledScrollBar}" />
-
-                            <ScrollBar x:Name="PART_HorizontalScrollBar"
-                                       Grid.Row="1"
-                                       Grid.Column="0"
-                                       Margin="0,6,0,0"
-                                       Orientation="Horizontal"
-                                       Minimum="0"
-                                       Maximum="{TemplateBinding ScrollableWidth}"
-                                       ViewportSize="{TemplateBinding ViewportWidth}"
-                                       Value="{Binding HorizontalOffset, RelativeSource={RelativeSource TemplatedParent}, Mode=OneWay}"
-                                       Visibility="{TemplateBinding ComputedHorizontalScrollBarVisibility}"
-                                       Style="{StaticResource HorizontalStyledScrollBar}" />
-
-                            <Rectangle Grid.Row="1"
-                                       Grid.Column="1"
-                                       Fill="Transparent" />
-                        </Grid>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <Style x:Key="BlueprintListBoxStyle" TargetType="{x:Type ListBox}">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Padding" Value="0,0,6,0" />
-            <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto" />
-            <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled" />
-            <Setter Property="ScrollViewer.CanContentScroll" Value="False" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="{x:Type ListBox}">
-                        <Border Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}">
-                            <ScrollViewer Focusable="False"
-                                          Padding="{TemplateBinding Padding}"
-                                          VerticalScrollBarVisibility="Auto"
-                                          HorizontalScrollBarVisibility="Disabled"
-                                          CanContentScroll="False"
-                                          Style="{StaticResource PrettyScrollViewerStyle}">
-                                <ItemsPresenter />
-                            </ScrollViewer>
-                        </Border>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <Style x:Key="EmbeddedScrollListBoxStyle" TargetType="{x:Type ListBox}">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Padding" Value="0,0,6,0" />
-            <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto" />
-            <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled" />
-            <Setter Property="ScrollViewer.CanContentScroll" Value="False" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="{x:Type ListBox}">
-                        <Border Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}">
-                            <ScrollViewer Focusable="False"
-                                          Padding="{TemplateBinding Padding}"
-                                          VerticalScrollBarVisibility="Auto"
-                                          HorizontalScrollBarVisibility="Disabled"
-                                          CanContentScroll="False"
-                                          Style="{StaticResource PrettyScrollViewerStyle}">
-                                <ItemsPresenter />
-                            </ScrollViewer>
-                        </Border>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <Style x:Key="PlainListBoxItemStyle" TargetType="{x:Type ListBoxItem}">
-            <Setter Property="Padding" Value="0" />
-            <Setter Property="Margin" Value="0" />
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Focusable" Value="False" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="{x:Type ListBoxItem}">
-                        <ContentPresenter />
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <!-- PANELS -->
         <Style x:Key="PanelBorderStyle" TargetType="Border">
             <Setter Property="Background" Value="{DynamicResource PanelBrush}" />
             <Setter Property="BorderBrush" Value="{DynamicResource BorderBrushCustom}" />
@@ -304,7 +47,6 @@
             <Setter Property="TextWrapping" Value="Wrap" />
         </Style>
 
-        <!-- BUTTONS -->
         <Style x:Key="PrimaryButtonStyle" TargetType="Button">
             <Setter Property="Height" Value="38" />
             <Setter Property="MinWidth" Value="120" />
@@ -357,7 +99,6 @@
             <Setter Property="FontSize" Value="12.5" />
         </Style>
 
-        <!-- SEARCH -->
         <Style x:Key="SearchTextBoxStyle" TargetType="TextBox">
             <Setter Property="Height" Value="40" />
             <Setter Property="Padding" Value="12,6" />
@@ -400,7 +141,15 @@
             </Setter>
         </Style>
 
-        <!-- LIST ITEMS -->
+        <Style x:Key="PlainComboBoxStyle" TargetType="ComboBox">
+            <Setter Property="Height" Value="38" />
+            <Setter Property="Padding" Value="10,4" />
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrushCustom}" />
+            <Setter Property="BorderThickness" Value="1" />
+        </Style>
+
         <Style x:Key="BlueprintListBoxItemStyle" TargetType="ListBoxItem">
             <Setter Property="Padding" Value="0" />
             <Setter Property="Margin" Value="0,0,0,10" />
@@ -600,7 +349,6 @@
 
                     <ListBox x:Name="BlueprintListBox"
                              Grid.Row="3"
-                             Style="{StaticResource BlueprintListBoxStyle}"
                              Background="Transparent"
                              BorderThickness="0"
                              ItemContainerStyle="{StaticResource BlueprintListBoxItemStyle}"
@@ -664,187 +412,194 @@
             </Border>
 
             <Border Grid.Column="2" Style="{StaticResource PanelBorderStyle}">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
-                    </Grid.RowDefinitions>
+                <ScrollViewer VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel>
+                        <TextBlock Text="Blueprint Configuration"
+                                   FontSize="20"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextPrimaryBrush}" />
 
-                    <TextBlock Grid.Row="0"
-                               Text="Blueprint Configuration"
-                               FontSize="20"
-                               FontWeight="SemiBold"
-                               Foreground="{DynamicResource TextPrimaryBrush}" />
-
-                    <StackPanel Grid.Row="1" Margin="0,18,0,18">
                         <TextBlock x:Name="SelectedBlueprintNameTextBlock"
                                    Text="No blueprint selected"
                                    FontSize="28"
                                    FontWeight="Bold"
                                    Foreground="{DynamicResource TextPrimaryBrush}"
-                                   Margin="0,0,0,6" />
+                                   Margin="0,18,0,6" />
 
                         <TextBlock x:Name="SelectedBlueprintSummaryTextBlock"
                                    Text="Choose a blueprint from the left library to see its configuration shell."
                                    Foreground="{DynamicResource TextSecondaryBrush}"
                                    FontSize="13.5"
-                                   TextWrapping="Wrap" />
+                                   TextWrapping="Wrap"
+                                   Margin="0,0,0,18" />
+
+                        <Border Style="{StaticResource CardBorderStyle}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="Type" Style="{StaticResource SectionLabelStyle}" />
+                                    <TextBlock x:Name="SelectedTypeTextBlock"
+                                               Text="—"
+                                               Style="{StaticResource BodyTextStyle}" />
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="1">
+                                    <TextBlock Text="Middleware" Style="{StaticResource SectionLabelStyle}" />
+                                    <TextBlock x:Name="SelectedMiddlewareTextBlock"
+                                               Text="—"
+                                               Style="{StaticResource BodyTextStyle}" />
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="Category" Style="{StaticResource SectionLabelStyle}" />
+                                    <TextBlock x:Name="SelectedCategoryTextBlock"
+                                               Text="—"
+                                               Style="{StaticResource BodyTextStyle}" />
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <Border Style="{StaticResource CardBorderStyle}">
+                            <StackPanel>
+                                <TextBlock Text="Implementation Goal"
+                                           Style="{StaticResource SectionLabelStyle}" />
+                                <TextBlock x:Name="ImplementationGoalTextBlock"
+                                           Text="—"
+                                           Style="{StaticResource BodyTextStyle}" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border x:Name="FootstepsConfiguratorCard"
+                                Style="{StaticResource CardBorderStyle}"
+                                IsEnabled="False"
+                                Opacity="0.55">
+                            <StackPanel>
+                                <TextBlock Text="Footsteps Controls"
+                                           Style="{StaticResource SectionLabelStyle}" />
+
+                                <TextBlock x:Name="FootstepsConfiguratorHintTextBlock"
+                                           Text="Select Footsteps Starter to enable this configuration panel."
+                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                           Margin="0,0,0,14"
+                                           TextWrapping="Wrap" />
+
+                                <Grid Margin="0,0,0,10">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="14" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="Spatial Mode" Style="{StaticResource SectionLabelStyle}" />
+                                        <ComboBox x:Name="SpatialModeComboBox"
+                                                  Style="{StaticResource PlainComboBoxStyle}"
+                                                  SelectionChanged="FootstepsControl_Changed" />
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Column="2">
+                                        <TextBlock Text="Event Structure" Style="{StaticResource SectionLabelStyle}" />
+                                        <ComboBox x:Name="EventStructureComboBox"
+                                                  Style="{StaticResource PlainComboBoxStyle}"
+                                                  SelectionChanged="FootstepsControl_Changed" />
+                                    </StackPanel>
+                                </Grid>
+
+                                <StackPanel Margin="0,0,0,12">
+                                    <TextBlock Text="Naming Prefix" Style="{StaticResource SectionLabelStyle}" />
+                                    <TextBox x:Name="NamingPrefixTextBox"
+                                             Style="{StaticResource SearchTextBoxStyle}"
+                                             Height="38"
+                                             TextChanged="NamingPrefixTextBox_TextChanged" />
+                                </StackPanel>
+
+                                <UniformGrid Columns="2" Rows="2">
+                                    <CheckBox x:Name="IncludeWaterCheckBox"
+                                              Content="Include Water"
+                                              Margin="0,0,0,8"
+                                              Checked="FootstepsControl_Changed"
+                                              Unchecked="FootstepsControl_Changed" />
+                                    <CheckBox x:Name="IncludeSprintCheckBox"
+                                              Content="Include Sprint"
+                                              Margin="0,0,0,8"
+                                              Checked="FootstepsControl_Changed"
+                                              Unchecked="FootstepsControl_Changed" />
+                                    <CheckBox x:Name="IncludeLandingCheckBox"
+                                              Content="Include Landing"
+                                              Margin="0,0,0,8"
+                                              Checked="FootstepsControl_Changed"
+                                              Unchecked="FootstepsControl_Changed" />
+                                    <CheckBox x:Name="IncludeGearCheckBox"
+                                              Content="Include Gear / Cloth"
+                                              Margin="0,0,0,8"
+                                              Checked="FootstepsControl_Changed"
+                                              Unchecked="FootstepsControl_Changed" />
+                                </UniformGrid>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource CardBorderStyle}">
+                            <StackPanel>
+                                <TextBlock Text="Live Configuration Summary"
+                                           Style="{StaticResource SectionLabelStyle}" />
+                                <ListBox x:Name="OptionsListBox"
+                                         Background="Transparent"
+                                         BorderThickness="0"
+                                         ItemTemplate="{StaticResource StringLineTemplate}"
+                                         ScrollViewer.HorizontalScrollBarVisibility="Disabled" />
+                            </StackPanel>
+                        </Border>
                     </StackPanel>
-
-                    <Border Grid.Row="2" Style="{StaticResource CardBorderStyle}">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-
-                            <StackPanel Grid.Column="0">
-                                <TextBlock Text="Type" Style="{StaticResource SectionLabelStyle}" />
-                                <TextBlock x:Name="SelectedTypeTextBlock"
-                                           Text="—"
-                                           Style="{StaticResource BodyTextStyle}" />
-                            </StackPanel>
-
-                            <StackPanel Grid.Column="1">
-                                <TextBlock Text="Middleware" Style="{StaticResource SectionLabelStyle}" />
-                                <TextBlock x:Name="SelectedMiddlewareTextBlock"
-                                           Text="—"
-                                           Style="{StaticResource BodyTextStyle}" />
-                            </StackPanel>
-
-                            <StackPanel Grid.Column="2">
-                                <TextBlock Text="Category" Style="{StaticResource SectionLabelStyle}" />
-                                <TextBlock x:Name="SelectedCategoryTextBlock"
-                                           Text="—"
-                                           Style="{StaticResource BodyTextStyle}" />
-                            </StackPanel>
-                        </Grid>
-                    </Border>
-
-                    <Border Grid.Row="3" Style="{StaticResource CardBorderStyle}">
-                        <StackPanel>
-                            <TextBlock Text="Implementation Goal"
-                                       Style="{StaticResource SectionLabelStyle}" />
-                            <TextBlock x:Name="ImplementationGoalTextBlock"
-                                       Text="—"
-                                       Style="{StaticResource BodyTextStyle}" />
-                        </StackPanel>
-                    </Border>
-
-                    <Border Grid.Row="4"
-                            Background="{DynamicResource PanelAltBrush}"
-                            BorderBrush="{DynamicResource BorderBrushCustom}"
-                            BorderThickness="1"
-                            CornerRadius="14"
-                            Padding="14"
-                            Margin="0">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="*" />
-                            </Grid.RowDefinitions>
-
-                            <TextBlock Text="Core Options"
-                                       Style="{StaticResource SectionLabelStyle}" />
-
-                            <ListBox x:Name="OptionsListBox"
-                                     Grid.Row="1"
-                                     Style="{StaticResource EmbeddedScrollListBoxStyle}"
-                                     ItemContainerStyle="{StaticResource PlainListBoxItemStyle}"
-                                     Background="Transparent"
-                                     BorderThickness="0"
-                                     ItemTemplate="{StaticResource StringLineTemplate}"
-                                     ScrollViewer.VerticalScrollBarVisibility="Auto"
-                                     ScrollViewer.HorizontalScrollBarVisibility="Disabled" />
-                        </Grid>
-                    </Border>
-                </Grid>
+                </ScrollViewer>
             </Border>
 
             <Border Grid.Column="4" Style="{StaticResource PanelBorderStyle}">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
-                        <RowDefinition Height="12" />
-                        <RowDefinition Height="*" />
-                    </Grid.RowDefinitions>
+                <ScrollViewer VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel>
+                        <TextBlock Text="Generation Preview"
+                                   FontSize="20"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextPrimaryBrush}" />
 
-                    <TextBlock Grid.Row="0"
-                               Text="Generation Preview"
-                               FontSize="20"
-                               FontWeight="SemiBold"
-                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                        <TextBlock x:Name="PreviewLeadTextBlock"
+                                   Text="The selected blueprint will populate this preview."
+                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                   FontSize="12.5"
+                                   Margin="0,8,0,18"
+                                   TextWrapping="Wrap" />
 
-                    <TextBlock x:Name="PreviewLeadTextBlock"
-                               Grid.Row="1"
-                               Text="The selected blueprint will populate this preview."
-                               Foreground="{DynamicResource TextSecondaryBrush}"
-                               FontSize="12.5"
-                               Margin="0,8,0,18"
-                               TextWrapping="Wrap" />
+                        <Border Style="{StaticResource CardBorderStyle}">
+                            <StackPanel>
+                                <TextBlock Text="Generated Items"
+                                           Style="{StaticResource SectionLabelStyle}" />
+                                <ListBox x:Name="GeneratedItemsListBox"
+                                         Background="Transparent"
+                                         BorderThickness="0"
+                                         ItemTemplate="{StaticResource StringLineTemplate}"
+                                         ScrollViewer.HorizontalScrollBarVisibility="Disabled" />
+                            </StackPanel>
+                        </Border>
 
-                    <Border Grid.Row="2"
-                            Background="{DynamicResource PanelAltBrush}"
-                            BorderBrush="{DynamicResource BorderBrushCustom}"
-                            BorderThickness="1"
-                            CornerRadius="14"
-                            Padding="14"
-                            Margin="0">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="*" />
-                            </Grid.RowDefinitions>
-
-                            <TextBlock Text="Generated Items"
-                                       Style="{StaticResource SectionLabelStyle}" />
-
-                            <ListBox x:Name="GeneratedItemsListBox"
-                                     Grid.Row="1"
-                                     Style="{StaticResource EmbeddedScrollListBoxStyle}"
-                                     ItemContainerStyle="{StaticResource PlainListBoxItemStyle}"
-                                     Background="Transparent"
-                                     BorderThickness="0"
-                                     ItemTemplate="{StaticResource StringLineTemplate}"
-                                     ScrollViewer.VerticalScrollBarVisibility="Auto"
-                                     ScrollViewer.HorizontalScrollBarVisibility="Disabled" />
-                        </Grid>
-                    </Border>
-
-                    <Border Grid.Row="4"
-                            Background="{DynamicResource PanelAltBrush}"
-                            BorderBrush="{DynamicResource BorderBrushCustom}"
-                            BorderThickness="1"
-                            CornerRadius="14"
-                            Padding="14"
-                            Margin="0">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="*" />
-                            </Grid.RowDefinitions>
-
-                            <TextBlock Text="Implementation Notes"
-                                       Style="{StaticResource SectionLabelStyle}" />
-
-                            <ListBox x:Name="NotesListBox"
-                                     Grid.Row="1"
-                                     Style="{StaticResource EmbeddedScrollListBoxStyle}"
-                                     ItemContainerStyle="{StaticResource PlainListBoxItemStyle}"
-                                     Background="Transparent"
-                                     BorderThickness="0"
-                                     ItemTemplate="{StaticResource StringLineTemplate}"
-                                     ScrollViewer.VerticalScrollBarVisibility="Auto"
-                                     ScrollViewer.HorizontalScrollBarVisibility="Disabled" />
-                        </Grid>
-                    </Border>
-                </Grid>
+                        <Border Style="{StaticResource CardBorderStyle}">
+                            <StackPanel>
+                                <TextBlock Text="Implementation Notes"
+                                           Style="{StaticResource SectionLabelStyle}" />
+                                <ListBox x:Name="NotesListBox"
+                                         Background="Transparent"
+                                         BorderThickness="0"
+                                         ItemTemplate="{StaticResource StringLineTemplate}"
+                                         ScrollViewer.HorizontalScrollBarVisibility="Disabled" />
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
             </Border>
         </Grid>
 

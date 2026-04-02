@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
@@ -12,7 +13,10 @@ namespace ForgeBlueprint
     {
         private readonly AppSettingsService _appSettingsService = new();
         private readonly List<BlueprintListItem> _allBlueprints;
+        private readonly FootstepsBlueprintOptions _footstepsOptions = new();
+
         private string _activeFilter = "All";
+        private bool _isUpdatingFootstepsUi;
 
         public MainWindow()
         {
@@ -20,9 +24,38 @@ namespace ForgeBlueprint
 
             _allBlueprints = CreateBlueprints();
 
+            InitializeFootstepsControls();
             UpdateThemeUi();
             ApplyFilterButtonStates();
             RefreshBlueprintLibrary();
+        }
+
+        private void InitializeFootstepsControls()
+        {
+            SpatialModeComboBox.ItemsSource = new List<string> { "3D", "2D" };
+            EventStructureComboBox.ItemsSource = new List<string>
+            {
+                "Single Master Event",
+                "Split by movement layer"
+            };
+
+            LoadFootstepsControlsIntoUi();
+        }
+
+        private void LoadFootstepsControlsIntoUi()
+        {
+            _isUpdatingFootstepsUi = true;
+
+            SpatialModeComboBox.SelectedItem = _footstepsOptions.SpatialMode;
+            EventStructureComboBox.SelectedItem = _footstepsOptions.EventStructure;
+            NamingPrefixTextBox.Text = _footstepsOptions.NamingPrefix;
+
+            IncludeWaterCheckBox.IsChecked = _footstepsOptions.IncludeWater;
+            IncludeSprintCheckBox.IsChecked = _footstepsOptions.IncludeSprint;
+            IncludeLandingCheckBox.IsChecked = _footstepsOptions.IncludeLanding;
+            IncludeGearCheckBox.IsChecked = _footstepsOptions.IncludeGear;
+
+            _isUpdatingFootstepsUi = false;
         }
 
         private void SearchTextBox_TextChanged(object sender, TextChangedEventArgs e)
@@ -73,16 +106,12 @@ namespace ForgeBlueprint
 
             if (selected == null)
             {
-                MessageBox.Show(
-                    "Select a blueprint first.",
-                    "Save Preset",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Information);
+                MessageBox.Show("Select a blueprint first.", "Save Preset", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
 
             MessageBox.Show(
-                $"Preset saving will come in the next step.\n\nCurrent selection: {selected.Name}",
+                $"Preset saving will come next.\n\nCurrent selection: {selected.Name}",
                 "Save Preset",
                 MessageBoxButton.OK,
                 MessageBoxImage.Information);
@@ -94,11 +123,7 @@ namespace ForgeBlueprint
 
             if (selected == null)
             {
-                MessageBox.Show(
-                    "Select a blueprint first.",
-                    "Generate",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Information);
+                MessageBox.Show("Select a blueprint first.", "Generate", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
 
@@ -111,7 +136,7 @@ namespace ForgeBlueprint
 
         private void RefreshBlueprintLibrary()
         {
-            string previousSelectionName = (BlueprintListBox.SelectedItem as BlueprintListItem)?.Name ?? string.Empty;
+            string previousSelectionKey = (BlueprintListBox.SelectedItem as BlueprintListItem)?.Key ?? string.Empty;
             string search = (SearchTextBox.Text ?? string.Empty).Trim();
 
             IEnumerable<BlueprintListItem> query = _allBlueprints;
@@ -140,7 +165,7 @@ namespace ForgeBlueprint
                 : $"{filtered.Count} blueprints available";
 
             BlueprintListItem? toSelect = filtered.FirstOrDefault(item =>
-                string.Equals(item.Name, previousSelectionName, StringComparison.OrdinalIgnoreCase));
+                string.Equals(item.Key, previousSelectionKey, StringComparison.OrdinalIgnoreCase));
 
             if (toSelect == null && filtered.Count > 0)
             {
@@ -166,9 +191,13 @@ namespace ForgeBlueprint
                 SelectedCategoryTextBlock.Text = "—";
                 ImplementationGoalTextBlock.Text = "—";
                 PreviewLeadTextBlock.Text = "The selected blueprint will populate this preview.";
+
                 OptionsListBox.ItemsSource = null;
                 GeneratedItemsListBox.ItemsSource = null;
                 NotesListBox.ItemsSource = null;
+
+                SetFootstepsConfiguratorEnabled(false);
+
                 StatusTitleTextBlock.Text = "Ready";
                 StatusSubtitleTextBlock.Text = "Select a blueprint to continue.";
                 return;
@@ -182,12 +211,159 @@ namespace ForgeBlueprint
             ImplementationGoalTextBlock.Text = blueprint.ImplementationGoal;
             PreviewLeadTextBlock.Text = blueprint.PreviewLead;
 
-            OptionsListBox.ItemsSource = blueprint.Options;
-            GeneratedItemsListBox.ItemsSource = blueprint.GeneratedItems;
-            NotesListBox.ItemsSource = blueprint.Notes;
+            if (string.Equals(blueprint.Key, "footsteps", StringComparison.OrdinalIgnoreCase))
+            {
+                SetFootstepsConfiguratorEnabled(true);
+                LoadFootstepsControlsIntoUi();
 
-            StatusTitleTextBlock.Text = blueprint.Name;
-            StatusSubtitleTextBlock.Text = "Shell loaded correctly. Ready for the next implementation step.";
+                OptionsListBox.ItemsSource = BuildFootstepsOptionSummary();
+                GeneratedItemsListBox.ItemsSource = BuildFootstepsGeneratedItems();
+                NotesListBox.ItemsSource = BuildFootstepsNotes();
+
+                StatusTitleTextBlock.Text = blueprint.Name;
+                StatusSubtitleTextBlock.Text = "Footsteps blueprint is now configurable.";
+            }
+            else
+            {
+                SetFootstepsConfiguratorEnabled(false);
+
+                OptionsListBox.ItemsSource = blueprint.Options;
+                GeneratedItemsListBox.ItemsSource = blueprint.GeneratedItems;
+                NotesListBox.ItemsSource = blueprint.Notes;
+
+                StatusTitleTextBlock.Text = blueprint.Name;
+                StatusSubtitleTextBlock.Text = "Static blueprint preview loaded.";
+            }
+        }
+
+        private void SetFootstepsConfiguratorEnabled(bool isEnabled)
+        {
+            FootstepsConfiguratorCard.IsEnabled = isEnabled;
+            FootstepsConfiguratorCard.Opacity = isEnabled ? 1.0 : 0.55;
+            FootstepsConfiguratorHintTextBlock.Text = isEnabled
+                ? "These controls update the Footsteps Starter preview in real time."
+                : "Select Footsteps Starter to enable this configuration panel.";
+        }
+
+        private void FootstepsControl_Changed(object sender, RoutedEventArgs e)
+        {
+            RefreshFootstepsStateFromUi();
+        }
+
+        private void NamingPrefixTextBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            RefreshFootstepsStateFromUi();
+        }
+
+        private void RefreshFootstepsStateFromUi()
+        {
+            if (_isUpdatingFootstepsUi)
+                return;
+
+            BlueprintListItem? selected = BlueprintListBox.SelectedItem as BlueprintListItem;
+            if (selected == null || !string.Equals(selected.Key, "footsteps", StringComparison.OrdinalIgnoreCase))
+                return;
+
+            _footstepsOptions.SpatialMode = SpatialModeComboBox.SelectedItem as string ?? "3D";
+            _footstepsOptions.EventStructure = EventStructureComboBox.SelectedItem as string ?? "Single Master Event";
+            _footstepsOptions.NamingPrefix = SanitizeToken(NamingPrefixTextBox.Text, "char");
+
+            _footstepsOptions.IncludeWater = IncludeWaterCheckBox.IsChecked == true;
+            _footstepsOptions.IncludeSprint = IncludeSprintCheckBox.IsChecked == true;
+            _footstepsOptions.IncludeLanding = IncludeLandingCheckBox.IsChecked == true;
+            _footstepsOptions.IncludeGear = IncludeGearCheckBox.IsChecked == true;
+
+            OptionsListBox.ItemsSource = BuildFootstepsOptionSummary();
+            GeneratedItemsListBox.ItemsSource = BuildFootstepsGeneratedItems();
+            NotesListBox.ItemsSource = BuildFootstepsNotes();
+
+            StatusTitleTextBlock.Text = "Footsteps Starter";
+            StatusSubtitleTextBlock.Text = "Preview updated from the current Footsteps settings.";
+        }
+
+        private List<string> BuildFootstepsOptionSummary()
+        {
+            string surfaces = string.Join(", ", _footstepsOptions.GetSurfaceNames());
+
+            return new List<string>
+            {
+                $"Spatial mode: {_footstepsOptions.SpatialMode}",
+                $"Event structure: {_footstepsOptions.EventStructure}",
+                $"Naming prefix: {_footstepsOptions.NamingPrefix}",
+                $"Surfaces: {surfaces}",
+                _footstepsOptions.IncludeSprint ? "Sprint layer: included" : "Sprint layer: disabled",
+                _footstepsOptions.IncludeLanding ? "Landing layer: included" : "Landing layer: disabled",
+                _footstepsOptions.IncludeGear ? "Gear / cloth companion: included" : "Gear / cloth companion: disabled"
+            };
+        }
+
+        private List<string> BuildFootstepsGeneratedItems()
+        {
+            string prefix = _footstepsOptions.NamingPrefix;
+            List<string> items = new();
+
+            if (string.Equals(_footstepsOptions.EventStructure, "Single Master Event", StringComparison.OrdinalIgnoreCase))
+            {
+                items.Add($"Event: ev_{prefix}_footsteps_master");
+            }
+            else
+            {
+                items.Add($"Event: ev_{prefix}_footsteps_walk");
+                if (_footstepsOptions.IncludeSprint)
+                    items.Add($"Event: ev_{prefix}_footsteps_sprint");
+                if (_footstepsOptions.IncludeLanding)
+                    items.Add($"Event: ev_{prefix}_footsteps_landing");
+            }
+
+            items.Add($"Spatial setup: {_footstepsOptions.SpatialMode}");
+            items.Add($"Folders: {string.Join(", ", _footstepsOptions.GetSurfaceNames())}");
+            items.Add($"Naming guide: foot_{prefix}_surface_var##");
+
+            if (_footstepsOptions.IncludeGear)
+            {
+                items.Add($"Companion event: ev_{prefix}_gear_movement");
+            }
+
+            if (_footstepsOptions.IncludeWater)
+            {
+                items.Add("Water surface extension included");
+            }
+
+            return items;
+        }
+
+        private List<string> BuildFootstepsNotes()
+        {
+            List<string> notes = new()
+            {
+                "This blueprint should be the first fully implemented generator in ForgeBlueprint.",
+                "It is representative because it mixes naming, routing, surfaces and optional layers."
+            };
+
+            if (string.Equals(_footstepsOptions.SpatialMode, "2D", StringComparison.OrdinalIgnoreCase))
+            {
+                notes.Add("2D mode fits menu-driven, side-view or simplified implementation needs.");
+            }
+            else
+            {
+                notes.Add("3D mode is better for world-space traversal and character-driven gameplay.");
+            }
+
+            if (string.Equals(_footstepsOptions.EventStructure, "Split by movement layer", StringComparison.OrdinalIgnoreCase))
+            {
+                notes.Add("Split mode makes it easier to separate walk, sprint and landing logic.");
+            }
+            else
+            {
+                notes.Add("Single master mode is faster for initial setup and easier to maintain.");
+            }
+
+            if (_footstepsOptions.IncludeGear)
+            {
+                notes.Add("Gear / cloth is enabled, so the system can scale into fuller character movement design.");
+            }
+
+            return notes;
         }
 
         private void ApplyFilterButtonStates()
@@ -237,46 +413,33 @@ namespace ForgeBlueprint
             return new BitmapImage(new Uri($"pack://application:,,,/{relativePath}", UriKind.Absolute));
         }
 
+        private static string SanitizeToken(string? value, string fallback)
+        {
+            string text = (value ?? string.Empty).Trim().ToLowerInvariant();
+            text = Regex.Replace(text, @"[^a-z0-9_]+", "_");
+            text = Regex.Replace(text, @"_+", "_").Trim('_');
+
+            return string.IsNullOrWhiteSpace(text) ? fallback : text;
+        }
+
         private static List<BlueprintListItem> CreateBlueprints()
         {
             return new List<BlueprintListItem>
             {
                 new BlueprintListItem
                 {
+                    Key = "footsteps",
                     Name = "Footsteps Starter",
                     BlueprintType = "System",
                     Middleware = "FMOD",
                     Category = "Traversal",
                     Summary = "Creates a strong starting shell for character footsteps with common surfaces and room for sprint and landing expansion.",
                     ImplementationGoal = "Set up a reusable footstep implementation structure that can evolve from simple one-shots into a full surface-driven system.",
-                    PreviewLead = "This blueprint is ideal as the first real ForgeBlueprint generator because it mixes structure, routing, naming and configuration decisions.",
-                    Options = new List<string>
-                    {
-                        "3D event setup by default",
-                        "Choose one master event or split per movement layer",
-                        "Surfaces: Stone, Dirt, Grass, Wood, Water",
-                        "Optional sprint layer",
-                        "Optional landing layer",
-                        "Optional gear/cloth companion events"
-                    },
-                    GeneratedItems = new List<string>
-                    {
-                        "Event: ev_char_footsteps_master",
-                        "Folders for each surface family",
-                        "Base naming guide for variations",
-                        "Footstep routing group",
-                        "Surface-ready implementation shell",
-                        "Optional sprint and landing extension points"
-                    },
-                    Notes = new List<string>
-                    {
-                        "Best first blueprint to implement in the app.",
-                        "Later this can branch into FMOD event generation and Wwise equivalents.",
-                        "It represents a real daily production need."
-                    }
+                    PreviewLead = "This blueprint is ideal as the first real ForgeBlueprint generator because it mixes structure, routing, naming and configuration decisions."
                 },
                 new BlueprintListItem
                 {
+                    Key = "ui2d",
                     Name = "UI 2D Starter",
                     BlueprintType = "System",
                     Middleware = "FMOD",
@@ -306,6 +469,7 @@ namespace ForgeBlueprint
                 },
                 new BlueprintListItem
                 {
+                    Key = "weaponbasic",
                     Name = "Weapon Basic Starter",
                     BlueprintType = "System",
                     Middleware = "FMOD",
@@ -335,6 +499,7 @@ namespace ForgeBlueprint
                 },
                 new BlueprintListItem
                 {
+                    Key = "3doneshot",
                     Name = "3D One-Shot Starter",
                     BlueprintType = "Event",
                     Middleware = "FMOD",
@@ -352,7 +517,7 @@ namespace ForgeBlueprint
                     {
                         "Single event shell",
                         "3D ready routing",
-                        "Distance/variation placeholders"
+                        "Distance / variation placeholders"
                     },
                     Notes = new List<string>
                     {
@@ -362,6 +527,7 @@ namespace ForgeBlueprint
                 },
                 new BlueprintListItem
                 {
+                    Key = "metroidvania",
                     Name = "Metroidvania Audio Starter",
                     BlueprintType = "Project",
                     Middleware = "FMOD",
@@ -391,6 +557,7 @@ namespace ForgeBlueprint
                 },
                 new BlueprintListItem
                 {
+                    Key = "towerdefense",
                     Name = "Tower Defense Audio Starter",
                     BlueprintType = "Project",
                     Middleware = "FMOD",
@@ -423,6 +590,7 @@ namespace ForgeBlueprint
 
     public sealed class BlueprintListItem
     {
+        public string Key { get; set; } = "";
         public string Name { get; set; } = "";
         public string BlueprintType { get; set; } = "";
         public string Middleware { get; set; } = "";
@@ -433,5 +601,35 @@ namespace ForgeBlueprint
         public List<string> Options { get; set; } = new();
         public List<string> GeneratedItems { get; set; } = new();
         public List<string> Notes { get; set; } = new();
+    }
+
+    public sealed class FootstepsBlueprintOptions
+    {
+        public string SpatialMode { get; set; } = "3D";
+        public string EventStructure { get; set; } = "Single Master Event";
+        public string NamingPrefix { get; set; } = "char";
+
+        public bool IncludeWater { get; set; } = true;
+        public bool IncludeSprint { get; set; } = true;
+        public bool IncludeLanding { get; set; } = true;
+        public bool IncludeGear { get; set; } = false;
+
+        public List<string> GetSurfaceNames()
+        {
+            List<string> surfaces = new()
+            {
+                "Stone",
+                "Dirt",
+                "Grass",
+                "Wood"
+            };
+
+            if (IncludeWater)
+            {
+                surfaces.Add("Water");
+            }
+
+            return surfaces;
+        }
     }
 }
