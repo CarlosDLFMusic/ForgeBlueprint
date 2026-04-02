@@ -1,0 +1,33 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Assets\forgevault_logo.png" />
+    <None Remove="Assets\forgevault_logo_inv.png" />
+    <None Remove="Assets\forgevault_tipo.png" />
+    <None Remove="Assets\forgevault_tipo_inv.png" />
+    <None Remove="Assets\Icons\forgevault_logo.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Blueprints\" />
+    <Folder Include="ViewModels\" />
+    <Folder Include="Views\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\forgevault_logo.png" />
+    <Resource Include="Assets\forgevault_logo_inv.png" />
+    <Resource Include="Assets\forgevault_tipo.png" />
+    <Resource Include="Assets\forgevault_tipo_inv.png" />
+    <Resource Include="Assets\Icons\forgevault_logo.ico" />
+  </ItemGroup>
+
+</Project>

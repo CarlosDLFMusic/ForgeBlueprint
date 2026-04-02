@@ -1,0 +1,62 @@
+﻿<Application x:Class="ForgeBlueprint.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             StartupUri="MainWindow.xaml">
+    <Application.Resources>
+
+        <!-- Base theme resources for designer + startup fallback -->
+        <SolidColorBrush x:Key="ForgeVaultInfoOverlayBackdropBrush" Color="#A60A0F16"/>
+
+        <SolidColorBrush x:Key="AppBackgroundBrush" Color="#111315"/>
+        <SolidColorBrush x:Key="PanelBrush" Color="#1A1D21"/>
+        <SolidColorBrush x:Key="PanelAltBrush" Color="#20242A"/>
+        <SolidColorBrush x:Key="SurfaceBrush" Color="#1F2733"/>
+        <SolidColorBrush x:Key="SurfaceAltBrush" Color="#172131"/>
+
+        <SolidColorBrush x:Key="BorderBrushCustom" Color="#2A2F36"/>
+        <SolidColorBrush x:Key="BorderBrush" Color="#2A2F36"/>
+        <SolidColorBrush x:Key="BorderStrongBrush" Color="#4A5360"/>
+        <SolidColorBrush x:Key="BorderBrushDark" Color="#2A2F36"/>
+
+        <SolidColorBrush x:Key="AccentBrush" Color="#4C8DFF"/>
+        <SolidColorBrush x:Key="AccentBrushStrong" Color="#6AA6FF"/>
+        <SolidColorBrush x:Key="AccentHoverBrush" Color="#6AA6FF"/>
+        <SolidColorBrush x:Key="AccentPressedBrush" Color="#3F79D8"/>
+        <SolidColorBrush x:Key="AccentTextBrush" Color="#F8FBFF"/>
+
+        <SolidColorBrush x:Key="TextPrimaryBrush" Color="#F2F4F7"/>
+        <SolidColorBrush x:Key="TextSecondaryBrush" Color="#A8B0BA"/>
+        <SolidColorBrush x:Key="PrimaryTextBrush" Color="#F2F4F7"/>
+        <SolidColorBrush x:Key="SecondaryTextBrush" Color="#A8B0BA"/>
+        <SolidColorBrush x:Key="TextMutedBrush" Color="#A8B0BA"/>
+        <SolidColorBrush x:Key="TextSoftBrush" Color="#8E98A4"/>
+
+        <SolidColorBrush x:Key="DangerBrush" Color="#B55A5A"/>
+        <SolidColorBrush x:Key="DangerBackgroundBrush" Color="#2B1D1D"/>
+        <SolidColorBrush x:Key="DangerHoverBrush" Color="#392323"/>
+        <SolidColorBrush x:Key="DangerTextBrush" Color="#F3DADA"/>
+        <SolidColorBrush x:Key="DangerHoverBorderBrush" Color="#D37B7B"/>
+
+        <SolidColorBrush x:Key="ScrollTrackBrush" Color="#2A2F36"/>
+        <SolidColorBrush x:Key="ScrollThumbBrush" Color="#A8B0BA"/>
+        <SolidColorBrush x:Key="ScrollThumbHoverBrush" Color="#F2F4F7"/>
+
+        <SolidColorBrush x:Key="ControlHoverBorderBrush" Color="#4A5360"/>
+        <SolidColorBrush x:Key="ControlPressedBrush" Color="#171A1D"/>
+        <SolidColorBrush x:Key="ControlPressedBorderBrush" Color="#252A31"/>
+        <SolidColorBrush x:Key="SubtleHoverBrush" Color="#243042"/>
+        <SolidColorBrush x:Key="SubtlePressedBrush" Color="#1A1E24"/>
+
+        <SolidColorBrush x:Key="WindowBackgroundBrush" Color="#111315"/>
+        <SolidColorBrush x:Key="PanelBackgroundBrush" Color="#1A1D21"/>
+        <SolidColorBrush x:Key="PanelAltBackgroundBrush" Color="#20242A"/>
+        <SolidColorBrush x:Key="InputBackgroundBrush" Color="#1F2733"/>
+        <SolidColorBrush x:Key="DialogBackgroundBrush" Color="#111315"/>
+        <SolidColorBrush x:Key="CardBrush" Color="#1A1D21"/>
+        <SolidColorBrush x:Key="CardBrushAlt" Color="#20242A"/>
+
+        <SolidColorBrush x:Key="CheckFillBrush" Color="#0E141D"/>
+        <SolidColorBrush x:Key="CheckMarkBrush" Color="#F4F7FB"/>
+
+    </Application.Resources>
+</Application>
