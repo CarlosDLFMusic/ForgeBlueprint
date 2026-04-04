@@ -5,20 +5,126 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         Title="ForgeBlueprint"
-        Width="1500"
-        Height="900"
-        MinWidth="1280"
-        MinHeight="780"
+        Width="1520"
+        Height="920"
+        MinWidth="1320"
+        MinHeight="820"
         Background="{DynamicResource AppBackgroundBrush}"
         Foreground="{DynamicResource TextPrimaryBrush}"
         WindowStartupLocation="CenterScreen">
 
     <Window.Resources>
+
+        <!-- Scrollbars -->
+        <Style x:Key="InvisibleRepeatButtonStyle" TargetType="RepeatButton">
+            <Setter Property="Focusable" Value="False" />
+            <Setter Property="IsTabStop" Value="False" />
+            <Setter Property="Opacity" Value="0" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RepeatButton">
+                        <Border Background="Transparent" />
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="ModernScrollThumbStyle" TargetType="Thumb">
+            <Setter Property="Background" Value="{DynamicResource ScrollThumbBrush}" />
+            <Setter Property="MinHeight" Value="40" />
+            <Setter Property="MinWidth" Value="40" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Thumb">
+                        <Border x:Name="ThumbBorder"
+                                Margin="2"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="6" />
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="ThumbBorder"
+                                        Property="Background"
+                                        Value="{DynamicResource ScrollThumbHoverBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsDragging" Value="True">
+                                <Setter TargetName="ThumbBorder"
+                                        Property="Background"
+                                        Value="{DynamicResource AccentBrushStrong}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <ControlTemplate x:Key="VerticalScrollBarTemplate" TargetType="ScrollBar">
+            <Grid Width="14" Background="Transparent">
+                <Border Width="8"
+                        HorizontalAlignment="Center"
+                        Background="{DynamicResource ScrollTrackBrush}"
+                        CornerRadius="4" />
+                <Track x:Name="PART_Track"
+                       IsDirectionReversed="True"
+                       Focusable="False">
+                    <Track.DecreaseRepeatButton>
+                        <RepeatButton Command="ScrollBar.PageUpCommand"
+                                      Style="{StaticResource InvisibleRepeatButtonStyle}" />
+                    </Track.DecreaseRepeatButton>
+                    <Track.Thumb>
+                        <Thumb Style="{StaticResource ModernScrollThumbStyle}" />
+                    </Track.Thumb>
+                    <Track.IncreaseRepeatButton>
+                        <RepeatButton Command="ScrollBar.PageDownCommand"
+                                      Style="{StaticResource InvisibleRepeatButtonStyle}" />
+                    </Track.IncreaseRepeatButton>
+                </Track>
+            </Grid>
+        </ControlTemplate>
+
+        <ControlTemplate x:Key="HorizontalScrollBarTemplate" TargetType="ScrollBar">
+            <Grid Height="14" Background="Transparent">
+                <Border Height="8"
+                        VerticalAlignment="Center"
+                        Background="{DynamicResource ScrollTrackBrush}"
+                        CornerRadius="4" />
+                <Track x:Name="PART_Track" Focusable="False">
+                    <Track.DecreaseRepeatButton>
+                        <RepeatButton Command="ScrollBar.PageLeftCommand"
+                                      Style="{StaticResource InvisibleRepeatButtonStyle}" />
+                    </Track.DecreaseRepeatButton>
+                    <Track.Thumb>
+                        <Thumb Style="{StaticResource ModernScrollThumbStyle}" />
+                    </Track.Thumb>
+                    <Track.IncreaseRepeatButton>
+                        <RepeatButton Command="ScrollBar.PageRightCommand"
+                                      Style="{StaticResource InvisibleRepeatButtonStyle}" />
+                    </Track.IncreaseRepeatButton>
+                </Track>
+            </Grid>
+        </ControlTemplate>
+
+        <Style TargetType="ScrollBar">
+            <Setter Property="OverridesDefaultStyle" Value="True" />
+            <Setter Property="SnapsToDevicePixels" Value="True" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Width" Value="14" />
+            <Setter Property="Height" Value="14" />
+            <Setter Property="Template" Value="{StaticResource VerticalScrollBarTemplate}" />
+            <Style.Triggers>
+                <Trigger Property="Orientation" Value="Horizontal">
+                    <Setter Property="Template" Value="{StaticResource HorizontalScrollBarTemplate}" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Panels -->
         <Style x:Key="PanelBorderStyle" TargetType="Border">
             <Setter Property="Background" Value="{DynamicResource PanelBrush}" />
             <Setter Property="BorderBrush" Value="{DynamicResource BorderBrushCustom}" />
             <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="18" />
+            <Setter Property="CornerRadius" Value="20" />
             <Setter Property="Padding" Value="18" />
             <Setter Property="SnapsToDevicePixels" Value="True" />
         </Style>
@@ -27,12 +133,13 @@
             <Setter Property="Background" Value="{DynamicResource PanelAltBrush}" />
             <Setter Property="BorderBrush" Value="{DynamicResource BorderBrushCustom}" />
             <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="14" />
-            <Setter Property="Padding" Value="14" />
-            <Setter Property="Margin" Value="0,0,0,12" />
+            <Setter Property="CornerRadius" Value="16" />
+            <Setter Property="Padding" Value="16" />
+            <Setter Property="Margin" Value="0,0,0,14" />
             <Setter Property="SnapsToDevicePixels" Value="True" />
         </Style>
 
+        <!-- Text -->
         <Style x:Key="SectionLabelStyle" TargetType="TextBlock">
             <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
             <Setter Property="FontSize" Value="11.5" />
@@ -47,10 +154,11 @@
             <Setter Property="TextWrapping" Value="Wrap" />
         </Style>
 
+        <!-- Buttons -->
         <Style x:Key="PrimaryButtonStyle" TargetType="Button">
-            <Setter Property="Height" Value="38" />
-            <Setter Property="MinWidth" Value="120" />
-            <Setter Property="Padding" Value="16,0" />
+            <Setter Property="Height" Value="40" />
+            <Setter Property="MinWidth" Value="124" />
+            <Setter Property="Padding" Value="18,0" />
             <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
             <Setter Property="Foreground" Value="{DynamicResource AccentTextBrush}" />
             <Setter Property="BorderBrush" Value="{DynamicResource AccentBrushStrong}" />
@@ -71,10 +179,10 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="ButtonBorder" Property="Opacity" Value="0.94" />
+                                <Setter TargetName="ButtonBorder" Property="Opacity" Value="0.96" />
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="ButtonBorder" Property="Opacity" Value="0.84" />
+                                <Setter TargetName="ButtonBorder" Property="Opacity" Value="0.86" />
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter TargetName="ButtonBorder" Property="Opacity" Value="0.55" />
@@ -95,10 +203,10 @@
             <Setter Property="Height" Value="34" />
             <Setter Property="MinWidth" Value="0" />
             <Setter Property="Padding" Value="8,0" />
-            <Setter Property="Margin" Value="0" />
             <Setter Property="FontSize" Value="12.5" />
         </Style>
 
+        <!-- Search -->
         <Style x:Key="SearchTextBoxStyle" TargetType="TextBox">
             <Setter Property="Height" Value="40" />
             <Setter Property="Padding" Value="12,6" />
@@ -141,13 +249,210 @@
             </Setter>
         </Style>
 
-        <Style x:Key="PlainComboBoxStyle" TargetType="ComboBox">
-            <Setter Property="Height" Value="38" />
-            <Setter Property="Padding" Value="10,4" />
-            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+        <!-- ComboBox -->
+        <Style x:Key="ModernComboBoxItemStyle" TargetType="ComboBoxItem">
             <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Padding" Value="10,7" />
+            <Setter Property="FontSize" Value="12.5" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBoxItem">
+                        <Border x:Name="ItemBorder"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="8">
+                            <ContentPresenter Margin="{TemplateBinding Padding}"
+                                              VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsHighlighted" Value="True">
+                                <Setter TargetName="ItemBorder"
+                                        Property="Background"
+                                        Value="{DynamicResource SubtleHoverBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="ItemBorder"
+                                        Property="Background"
+                                        Value="{DynamicResource SubtlePressedBrush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="ModernComboBoxStyle" TargetType="ComboBox">
+            <Setter Property="Height" Value="40" />
+            <Setter Property="Padding" Value="12,0,42,0" />
+            <Setter Property="FontSize" Value="12.5" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
             <Setter Property="BorderBrush" Value="{DynamicResource BorderBrushCustom}" />
             <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="ItemContainerStyle" Value="{StaticResource ModernComboBoxItemStyle}" />
+            <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBox">
+                        <Grid>
+                            <Border x:Name="OuterBorder"
+                                    Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="12" />
+
+                            <ContentPresenter Margin="{TemplateBinding Padding}"
+                                              VerticalAlignment="Center"
+                                              HorizontalAlignment="Left"
+                                              Content="{TemplateBinding SelectionBoxItem}"
+                                              ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}" />
+
+                            <Grid Width="36"
+                                  HorizontalAlignment="Right">
+                                <Path Data="M 0 0 L 4 4 L 8 0"
+                                      Stroke="{DynamicResource TextSecondaryBrush}"
+                                      StrokeThickness="1.6"
+                                      StrokeStartLineCap="Round"
+                                      StrokeEndLineCap="Round"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Center" />
+                            </Grid>
+
+                            <Popup x:Name="PART_Popup"
+                                   Placement="Bottom"
+                                   IsOpen="{TemplateBinding IsDropDownOpen}"
+                                   AllowsTransparency="True"
+                                   Focusable="False"
+                                   PopupAnimation="Fade">
+                                <Border MinWidth="{TemplateBinding ActualWidth}"
+                                        Margin="0,6,0,0"
+                                        Background="{DynamicResource PanelBrush}"
+                                        BorderBrush="{DynamicResource BorderBrushCustom}"
+                                        BorderThickness="1"
+                                        CornerRadius="12"
+                                        Padding="6">
+                                    <ScrollViewer CanContentScroll="True"
+                                                  VerticalScrollBarVisibility="Auto">
+                                        <StackPanel IsItemsHost="True"
+                                                    KeyboardNavigation.DirectionalNavigation="Contained" />
+                                    </ScrollViewer>
+                                </Border>
+                            </Popup>
+                        </Grid>
+
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="OuterBorder"
+                                        Property="BorderBrush"
+                                        Value="{DynamicResource ControlHoverBorderBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                                <Setter TargetName="OuterBorder"
+                                        Property="BorderBrush"
+                                        Value="{DynamicResource AccentBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="OuterBorder"
+                                        Property="Opacity"
+                                        Value="0.6" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- CheckBox -->
+        <Style x:Key="ModernCheckBoxStyle" TargetType="CheckBox">
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+            <Setter Property="FontSize" Value="12.5" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="CheckBox">
+                        <Border x:Name="OuterBorder"
+                                Background="{DynamicResource SurfaceBrush}"
+                                BorderBrush="{DynamicResource BorderBrushCustom}"
+                                BorderThickness="1"
+                                CornerRadius="12"
+                                Padding="12,10">
+                            <DockPanel LastChildFill="True">
+                                <Grid Width="18"
+                                      Height="18"
+                                      Margin="0,0,10,0">
+                                    <Border x:Name="CheckBoxSquare"
+                                            Background="{DynamicResource CheckFillBrush}"
+                                            BorderBrush="{DynamicResource BorderBrushCustom}"
+                                            BorderThickness="1"
+                                            CornerRadius="5" />
+                                    <Path x:Name="CheckMark"
+                                          Data="M 3 9 L 7 13 L 15 4"
+                                          Stroke="{DynamicResource CheckMarkBrush}"
+                                          StrokeThickness="2"
+                                          StrokeStartLineCap="Round"
+                                          StrokeEndLineCap="Round"
+                                          StrokeLineJoin="Round"
+                                          Visibility="Collapsed" />
+                                </Grid>
+
+                                <ContentPresenter VerticalAlignment="Center"
+                                                  RecognizesAccessKey="True" />
+                            </DockPanel>
+                        </Border>
+
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="OuterBorder"
+                                        Property="BorderBrush"
+                                        Value="{DynamicResource ControlHoverBorderBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="CheckBoxSquare"
+                                        Property="Background"
+                                        Value="{DynamicResource AccentBrush}" />
+                                <Setter TargetName="CheckBoxSquare"
+                                        Property="BorderBrush"
+                                        Value="{DynamicResource AccentBrushStrong}" />
+                                <Setter TargetName="CheckMark"
+                                        Property="Visibility"
+                                        Value="Visible" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="OuterBorder"
+                                        Property="Opacity"
+                                        Value="0.6" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- ListBoxes -->
+        <Style x:Key="BlueprintListBoxStyle" TargetType="ListBox">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0" />
+        </Style>
+
+        <Style x:Key="EmbeddedScrollListBoxStyle" TargetType="ListBox">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Focusable" Value="False" />
+        </Style>
+
+        <Style x:Key="PlainListBoxItemStyle" TargetType="ListBoxItem">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Focusable" Value="False" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <ContentPresenter />
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
 
         <Style x:Key="BlueprintListBoxItemStyle" TargetType="ListBoxItem">
@@ -184,7 +489,7 @@
 
         <DataTemplate x:Key="StringLineTemplate">
             <Border Margin="0,0,0,8"
-                    Padding="10,8"
+                    Padding="11,9"
                     Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrushCustom}"
                     BorderThickness="1"
@@ -200,12 +505,13 @@
     <Grid Margin="18">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="14" />
+            <RowDefinition Height="16" />
             <RowDefinition Height="*" />
-            <RowDefinition Height="14" />
+            <RowDefinition Height="16" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
+        <!-- Header -->
         <Border Grid.Row="0" Style="{StaticResource PanelBorderStyle}">
             <Grid>
                 <Grid.ColumnDefinitions>
@@ -214,12 +520,12 @@
                 </Grid.ColumnDefinitions>
 
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <Border Width="52"
-                            Height="52"
+                    <Border Width="54"
+                            Height="54"
                             Background="{DynamicResource PanelAltBrush}"
                             BorderBrush="{DynamicResource BorderBrushCustom}"
                             BorderThickness="1"
-                            CornerRadius="14"
+                            CornerRadius="15"
                             Padding="8"
                             Margin="0,0,14,0">
                         <Image x:Name="HeaderLogoImage" Stretch="Uniform" />
@@ -271,15 +577,17 @@
             </Grid>
         </Border>
 
+        <!-- Main -->
         <Grid Grid.Row="2">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="360" />
-                <ColumnDefinition Width="14" />
+                <ColumnDefinition Width="16" />
                 <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="14" />
-                <ColumnDefinition Width="330" />
+                <ColumnDefinition Width="16" />
+                <ColumnDefinition Width="350" />
             </Grid.ColumnDefinitions>
 
+            <!-- Left -->
             <Border Grid.Column="0" Style="{StaticResource PanelBorderStyle}">
                 <Grid>
                     <Grid.RowDefinitions>
@@ -292,8 +600,7 @@
                     <StackPanel Grid.Row="0" Margin="0,0,0,14">
                         <TextBlock Text="Blueprint Library"
                                    FontSize="20"
-                                   FontWeight="SemiBold"
-                                   Foreground="{DynamicResource TextPrimaryBrush}" />
+                                   FontWeight="SemiBold" />
                         <TextBlock x:Name="BlueprintCountTextBlock"
                                    Text="0 blueprints available"
                                    Foreground="{DynamicResource TextSecondaryBrush}"
@@ -304,8 +611,7 @@
                     <TextBox x:Name="SearchTextBox"
                              Grid.Row="1"
                              Style="{StaticResource SearchTextBoxStyle}"
-                             TextChanged="SearchTextBox_TextChanged"
-                             ToolTip="Search blueprints..." />
+                             TextChanged="SearchTextBox_TextChanged" />
 
                     <Grid Grid.Row="2" Margin="0,14,0,14">
                         <Grid.ColumnDefinitions>
@@ -324,21 +630,18 @@
                                 Tag="All"
                                 Style="{StaticResource FilterButtonStyle}"
                                 Click="FilterButton_Click" />
-
                         <Button x:Name="SystemFilterButton"
                                 Grid.Column="2"
                                 Content="System"
                                 Tag="System"
                                 Style="{StaticResource FilterButtonStyle}"
                                 Click="FilterButton_Click" />
-
                         <Button x:Name="ProjectFilterButton"
                                 Grid.Column="4"
                                 Content="Project"
                                 Tag="Project"
                                 Style="{StaticResource FilterButtonStyle}"
                                 Click="FilterButton_Click" />
-
                         <Button x:Name="EventFilterButton"
                                 Grid.Column="6"
                                 Content="Event"
@@ -349,8 +652,7 @@
 
                     <ListBox x:Name="BlueprintListBox"
                              Grid.Row="3"
-                             Background="Transparent"
-                             BorderThickness="0"
+                             Style="{StaticResource BlueprintListBoxStyle}"
                              ItemContainerStyle="{StaticResource BlueprintListBoxItemStyle}"
                              SelectionChanged="BlueprintListBox_SelectionChanged"
                              ScrollViewer.VerticalScrollBarVisibility="Auto"
@@ -411,20 +713,19 @@
                 </Grid>
             </Border>
 
+            <!-- Center -->
             <Border Grid.Column="2" Style="{StaticResource PanelBorderStyle}">
                 <ScrollViewer VerticalScrollBarVisibility="Auto"
                               HorizontalScrollBarVisibility="Disabled">
                     <StackPanel>
                         <TextBlock Text="Blueprint Configuration"
                                    FontSize="20"
-                                   FontWeight="SemiBold"
-                                   Foreground="{DynamicResource TextPrimaryBrush}" />
+                                   FontWeight="SemiBold" />
 
                         <TextBlock x:Name="SelectedBlueprintNameTextBlock"
                                    Text="No blueprint selected"
                                    FontSize="28"
                                    FontWeight="Bold"
-                                   Foreground="{DynamicResource TextPrimaryBrush}"
                                    Margin="0,18,0,6" />
 
                         <TextBlock x:Name="SelectedBlueprintSummaryTextBlock"
@@ -489,7 +790,7 @@
                                            Margin="0,0,0,14"
                                            TextWrapping="Wrap" />
 
-                                <Grid Margin="0,0,0,10">
+                                <Grid Margin="0,0,0,12">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="14" />
@@ -497,22 +798,25 @@
                                     </Grid.ColumnDefinitions>
 
                                     <StackPanel Grid.Column="0">
-                                        <TextBlock Text="Spatial Mode" Style="{StaticResource SectionLabelStyle}" />
+                                        <TextBlock Text="Spatial Mode"
+                                                   Style="{StaticResource SectionLabelStyle}" />
                                         <ComboBox x:Name="SpatialModeComboBox"
-                                                  Style="{StaticResource PlainComboBoxStyle}"
+                                                  Style="{StaticResource ModernComboBoxStyle}"
                                                   SelectionChanged="FootstepsControl_Changed" />
                                     </StackPanel>
 
                                     <StackPanel Grid.Column="2">
-                                        <TextBlock Text="Event Structure" Style="{StaticResource SectionLabelStyle}" />
+                                        <TextBlock Text="Event Structure"
+                                                   Style="{StaticResource SectionLabelStyle}" />
                                         <ComboBox x:Name="EventStructureComboBox"
-                                                  Style="{StaticResource PlainComboBoxStyle}"
+                                                  Style="{StaticResource ModernComboBoxStyle}"
                                                   SelectionChanged="FootstepsControl_Changed" />
                                     </StackPanel>
                                 </Grid>
 
                                 <StackPanel Margin="0,0,0,12">
-                                    <TextBlock Text="Naming Prefix" Style="{StaticResource SectionLabelStyle}" />
+                                    <TextBlock Text="Naming Prefix"
+                                               Style="{StaticResource SectionLabelStyle}" />
                                     <TextBox x:Name="NamingPrefixTextBox"
                                              Style="{StaticResource SearchTextBoxStyle}"
                                              Height="38"
@@ -522,22 +826,26 @@
                                 <UniformGrid Columns="2" Rows="2">
                                     <CheckBox x:Name="IncludeWaterCheckBox"
                                               Content="Include Water"
-                                              Margin="0,0,0,8"
+                                              Style="{StaticResource ModernCheckBoxStyle}"
+                                              Margin="0,0,10,10"
                                               Checked="FootstepsControl_Changed"
                                               Unchecked="FootstepsControl_Changed" />
                                     <CheckBox x:Name="IncludeSprintCheckBox"
                                               Content="Include Sprint"
-                                              Margin="0,0,0,8"
+                                              Style="{StaticResource ModernCheckBoxStyle}"
+                                              Margin="0,0,0,10"
                                               Checked="FootstepsControl_Changed"
                                               Unchecked="FootstepsControl_Changed" />
                                     <CheckBox x:Name="IncludeLandingCheckBox"
                                               Content="Include Landing"
-                                              Margin="0,0,0,8"
+                                              Style="{StaticResource ModernCheckBoxStyle}"
+                                              Margin="0,0,10,0"
                                               Checked="FootstepsControl_Changed"
                                               Unchecked="FootstepsControl_Changed" />
                                     <CheckBox x:Name="IncludeGearCheckBox"
                                               Content="Include Gear / Cloth"
-                                              Margin="0,0,0,8"
+                                              Style="{StaticResource ModernCheckBoxStyle}"
+                                              Margin="0,0,0,0"
                                               Checked="FootstepsControl_Changed"
                                               Unchecked="FootstepsControl_Changed" />
                                 </UniformGrid>
@@ -549,9 +857,10 @@
                                 <TextBlock Text="Live Configuration Summary"
                                            Style="{StaticResource SectionLabelStyle}" />
                                 <ListBox x:Name="OptionsListBox"
-                                         Background="Transparent"
-                                         BorderThickness="0"
+                                         Style="{StaticResource EmbeddedScrollListBoxStyle}"
+                                         ItemContainerStyle="{StaticResource PlainListBoxItemStyle}"
                                          ItemTemplate="{StaticResource StringLineTemplate}"
+                                         ScrollViewer.VerticalScrollBarVisibility="Auto"
                                          ScrollViewer.HorizontalScrollBarVisibility="Disabled" />
                             </StackPanel>
                         </Border>
@@ -559,50 +868,60 @@
                 </ScrollViewer>
             </Border>
 
+            <!-- Right -->
             <Border Grid.Column="4" Style="{StaticResource PanelBorderStyle}">
-                <ScrollViewer VerticalScrollBarVisibility="Auto"
-                              HorizontalScrollBarVisibility="Disabled">
-                    <StackPanel>
-                        <TextBlock Text="Generation Preview"
-                                   FontSize="20"
-                                   FontWeight="SemiBold"
-                                   Foreground="{DynamicResource TextPrimaryBrush}" />
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="14" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
 
-                        <TextBlock x:Name="PreviewLeadTextBlock"
-                                   Text="The selected blueprint will populate this preview."
-                                   Foreground="{DynamicResource TextSecondaryBrush}"
-                                   FontSize="12.5"
-                                   Margin="0,8,0,18"
-                                   TextWrapping="Wrap" />
+                    <TextBlock Grid.Row="0"
+                               Text="Generation Preview"
+                               FontSize="20"
+                               FontWeight="SemiBold" />
 
-                        <Border Style="{StaticResource CardBorderStyle}">
-                            <StackPanel>
-                                <TextBlock Text="Generated Items"
-                                           Style="{StaticResource SectionLabelStyle}" />
-                                <ListBox x:Name="GeneratedItemsListBox"
-                                         Background="Transparent"
-                                         BorderThickness="0"
-                                         ItemTemplate="{StaticResource StringLineTemplate}"
-                                         ScrollViewer.HorizontalScrollBarVisibility="Disabled" />
-                            </StackPanel>
-                        </Border>
+                    <TextBlock x:Name="PreviewLeadTextBlock"
+                               Grid.Row="1"
+                               Text="The selected blueprint will populate this preview."
+                               Foreground="{DynamicResource TextSecondaryBrush}"
+                               FontSize="12.5"
+                               Margin="0,8,0,18"
+                               TextWrapping="Wrap" />
 
-                        <Border Style="{StaticResource CardBorderStyle}">
-                            <StackPanel>
-                                <TextBlock Text="Implementation Notes"
-                                           Style="{StaticResource SectionLabelStyle}" />
-                                <ListBox x:Name="NotesListBox"
-                                         Background="Transparent"
-                                         BorderThickness="0"
-                                         ItemTemplate="{StaticResource StringLineTemplate}"
-                                         ScrollViewer.HorizontalScrollBarVisibility="Disabled" />
-                            </StackPanel>
-                        </Border>
-                    </StackPanel>
-                </ScrollViewer>
+                    <Border Grid.Row="2" Style="{StaticResource CardBorderStyle}" Margin="0,0,0,0">
+                        <StackPanel>
+                            <TextBlock Text="Generated Items"
+                                       Style="{StaticResource SectionLabelStyle}" />
+                            <ListBox x:Name="GeneratedItemsListBox"
+                                     Style="{StaticResource EmbeddedScrollListBoxStyle}"
+                                     ItemContainerStyle="{StaticResource PlainListBoxItemStyle}"
+                                     ItemTemplate="{StaticResource StringLineTemplate}"
+                                     ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                     ScrollViewer.HorizontalScrollBarVisibility="Disabled" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Row="4" Style="{StaticResource CardBorderStyle}" Margin="0,0,0,0">
+                        <StackPanel>
+                            <TextBlock Text="Implementation Notes"
+                                       Style="{StaticResource SectionLabelStyle}" />
+                            <ListBox x:Name="NotesListBox"
+                                     Style="{StaticResource EmbeddedScrollListBoxStyle}"
+                                     ItemContainerStyle="{StaticResource PlainListBoxItemStyle}"
+                                     ItemTemplate="{StaticResource StringLineTemplate}"
+                                     ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                     ScrollViewer.HorizontalScrollBarVisibility="Disabled" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
             </Border>
         </Grid>
 
+        <!-- Footer -->
         <Border Grid.Row="4" Style="{StaticResource PanelBorderStyle}">
             <Grid>
                 <Grid.ColumnDefinitions>
@@ -614,8 +933,7 @@
                     <TextBlock x:Name="StatusTitleTextBlock"
                                Text="Ready"
                                FontSize="15"
-                               FontWeight="SemiBold"
-                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                               FontWeight="SemiBold" />
                     <TextBlock x:Name="StatusSubtitleTextBlock"
                                Text="Select a blueprint to continue."
                                FontSize="12.5"

@@ -1,10 +1,13 @@
-﻿using ForgeBlueprint.Services;
+﻿using ForgeBlueprint.Models;
+using ForgeBlueprint.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
 namespace ForgeBlueprint
@@ -12,9 +15,10 @@ namespace ForgeBlueprint
     public partial class MainWindow : Window
     {
         private readonly AppSettingsService _appSettingsService = new();
-        private readonly List<BlueprintListItem> _allBlueprints;
+        private readonly BlueprintLibraryService _blueprintLibraryService = new();
         private readonly FootstepsBlueprintOptions _footstepsOptions = new();
 
+        private List<BlueprintDefinition> _allBlueprints = new();
         private string _activeFilter = "All";
         private bool _isUpdatingFootstepsUi;
 
@@ -22,12 +26,34 @@ namespace ForgeBlueprint
         {
             InitializeComponent();
 
-            _allBlueprints = CreateBlueprints();
+            _allBlueprints = _blueprintLibraryService.GetBlueprints();
 
             InitializeFootstepsControls();
             UpdateThemeUi();
             ApplyFilterButtonStates();
             RefreshBlueprintLibrary();
+
+            PreviewMouseDown += MainWindow_PreviewMouseDown;
+        }
+
+        private void MainWindow_PreviewMouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.OriginalSource is not DependencyObject dependencyObject)
+                return;
+
+            DependencyObject? current = dependencyObject;
+
+            while (current != null)
+            {
+                if (current is TextBox || current is ComboBox || current is ComboBoxItem)
+                {
+                    return;
+                }
+
+                current = VisualTreeHelper.GetParent(current);
+            }
+
+            Keyboard.ClearFocus();
         }
 
         private void InitializeFootstepsControls()
@@ -46,16 +72,21 @@ namespace ForgeBlueprint
         {
             _isUpdatingFootstepsUi = true;
 
-            SpatialModeComboBox.SelectedItem = _footstepsOptions.SpatialMode;
-            EventStructureComboBox.SelectedItem = _footstepsOptions.EventStructure;
-            NamingPrefixTextBox.Text = _footstepsOptions.NamingPrefix;
+            try
+            {
+                SpatialModeComboBox.SelectedItem = _footstepsOptions.SpatialMode;
+                EventStructureComboBox.SelectedItem = _footstepsOptions.EventStructure;
+                NamingPrefixTextBox.Text = _footstepsOptions.NamingPrefix;
 
-            IncludeWaterCheckBox.IsChecked = _footstepsOptions.IncludeWater;
-            IncludeSprintCheckBox.IsChecked = _footstepsOptions.IncludeSprint;
-            IncludeLandingCheckBox.IsChecked = _footstepsOptions.IncludeLanding;
-            IncludeGearCheckBox.IsChecked = _footstepsOptions.IncludeGear;
-
-            _isUpdatingFootstepsUi = false;
+                IncludeWaterCheckBox.IsChecked = _footstepsOptions.IncludeWater;
+                IncludeSprintCheckBox.IsChecked = _footstepsOptions.IncludeSprint;
+                IncludeLandingCheckBox.IsChecked = _footstepsOptions.IncludeLanding;
+                IncludeGearCheckBox.IsChecked = _footstepsOptions.IncludeGear;
+            }
+            finally
+            {
+                _isUpdatingFootstepsUi = false;
+            }
         }
 
         private void SearchTextBox_TextChanged(object sender, TextChangedEventArgs e)
@@ -75,7 +106,7 @@ namespace ForgeBlueprint
 
         private void BlueprintListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            DisplaySelectedBlueprint(BlueprintListBox.SelectedItem as BlueprintListItem);
+            DisplaySelectedBlueprint(BlueprintListBox.SelectedItem as BlueprintDefinition);
         }
 
         private void ThemeToggleButton_Click(object sender, RoutedEventArgs e)
@@ -102,7 +133,7 @@ namespace ForgeBlueprint
 
         private void SavePresetButton_Click(object sender, RoutedEventArgs e)
         {
-            BlueprintListItem? selected = BlueprintListBox.SelectedItem as BlueprintListItem;
+            BlueprintDefinition? selected = BlueprintListBox.SelectedItem as BlueprintDefinition;
 
             if (selected == null)
             {
@@ -119,7 +150,7 @@ namespace ForgeBlueprint
 
         private void GenerateButton_Click(object sender, RoutedEventArgs e)
         {
-            BlueprintListItem? selected = BlueprintListBox.SelectedItem as BlueprintListItem;
+            BlueprintDefinition? selected = BlueprintListBox.SelectedItem as BlueprintDefinition;
 
             if (selected == null)
             {
@@ -136,10 +167,10 @@ namespace ForgeBlueprint
 
         private void RefreshBlueprintLibrary()
         {
-            string previousSelectionKey = (BlueprintListBox.SelectedItem as BlueprintListItem)?.Key ?? string.Empty;
+            string previousSelectionKey = (BlueprintListBox.SelectedItem as BlueprintDefinition)?.Key ?? string.Empty;
             string search = (SearchTextBox.Text ?? string.Empty).Trim();
 
-            IEnumerable<BlueprintListItem> query = _allBlueprints;
+            IEnumerable<BlueprintDefinition> query = _allBlueprints;
 
             if (!string.Equals(_activeFilter, "All", StringComparison.OrdinalIgnoreCase))
             {
@@ -157,14 +188,14 @@ namespace ForgeBlueprint
                     item.Summary.Contains(search, StringComparison.OrdinalIgnoreCase));
             }
 
-            List<BlueprintListItem> filtered = query.ToList();
+            List<BlueprintDefinition> filtered = query.ToList();
 
             BlueprintListBox.ItemsSource = filtered;
             BlueprintCountTextBlock.Text = filtered.Count == 1
                 ? "1 blueprint available"
                 : $"{filtered.Count} blueprints available";
 
-            BlueprintListItem? toSelect = filtered.FirstOrDefault(item =>
+            BlueprintDefinition? toSelect = filtered.FirstOrDefault(item =>
                 string.Equals(item.Key, previousSelectionKey, StringComparison.OrdinalIgnoreCase));
 
             if (toSelect == null && filtered.Count > 0)
@@ -180,7 +211,7 @@ namespace ForgeBlueprint
             }
         }
 
-        private void DisplaySelectedBlueprint(BlueprintListItem? blueprint)
+        private void DisplaySelectedBlueprint(BlueprintDefinition? blueprint)
         {
             if (blueprint == null)
             {
@@ -215,10 +246,7 @@ namespace ForgeBlueprint
             {
                 SetFootstepsConfiguratorEnabled(true);
                 LoadFootstepsControlsIntoUi();
-
-                OptionsListBox.ItemsSource = BuildFootstepsOptionSummary();
-                GeneratedItemsListBox.ItemsSource = BuildFootstepsGeneratedItems();
-                NotesListBox.ItemsSource = BuildFootstepsNotes();
+                UpdateFootstepsPreview();
 
                 StatusTitleTextBlock.Text = blueprint.Name;
                 StatusSubtitleTextBlock.Text = "Footsteps blueprint is now configurable.";
@@ -227,9 +255,9 @@ namespace ForgeBlueprint
             {
                 SetFootstepsConfiguratorEnabled(false);
 
-                OptionsListBox.ItemsSource = blueprint.Options;
-                GeneratedItemsListBox.ItemsSource = blueprint.GeneratedItems;
-                NotesListBox.ItemsSource = blueprint.Notes;
+                OptionsListBox.ItemsSource = blueprint.StaticOptions;
+                GeneratedItemsListBox.ItemsSource = blueprint.StaticGeneratedItems;
+                NotesListBox.ItemsSource = blueprint.StaticNotes;
 
                 StatusTitleTextBlock.Text = blueprint.Name;
                 StatusSubtitleTextBlock.Text = "Static blueprint preview loaded.";
@@ -260,7 +288,7 @@ namespace ForgeBlueprint
             if (_isUpdatingFootstepsUi)
                 return;
 
-            BlueprintListItem? selected = BlueprintListBox.SelectedItem as BlueprintListItem;
+            BlueprintDefinition? selected = BlueprintListBox.SelectedItem as BlueprintDefinition;
             if (selected == null || !string.Equals(selected.Key, "footsteps", StringComparison.OrdinalIgnoreCase))
                 return;
 
@@ -273,12 +301,17 @@ namespace ForgeBlueprint
             _footstepsOptions.IncludeLanding = IncludeLandingCheckBox.IsChecked == true;
             _footstepsOptions.IncludeGear = IncludeGearCheckBox.IsChecked == true;
 
-            OptionsListBox.ItemsSource = BuildFootstepsOptionSummary();
-            GeneratedItemsListBox.ItemsSource = BuildFootstepsGeneratedItems();
-            NotesListBox.ItemsSource = BuildFootstepsNotes();
+            UpdateFootstepsPreview();
 
             StatusTitleTextBlock.Text = "Footsteps Starter";
             StatusSubtitleTextBlock.Text = "Preview updated from the current Footsteps settings.";
+        }
+
+        private void UpdateFootstepsPreview()
+        {
+            OptionsListBox.ItemsSource = BuildFootstepsOptionSummary();
+            GeneratedItemsListBox.ItemsSource = BuildFootstepsGeneratedItems();
+            NotesListBox.ItemsSource = BuildFootstepsNotes();
         }
 
         private List<string> BuildFootstepsOptionSummary()
@@ -291,6 +324,7 @@ namespace ForgeBlueprint
                 $"Event structure: {_footstepsOptions.EventStructure}",
                 $"Naming prefix: {_footstepsOptions.NamingPrefix}",
                 $"Surfaces: {surfaces}",
+                _footstepsOptions.IncludeWater ? "Water surface: included" : "Water surface: disabled",
                 _footstepsOptions.IncludeSprint ? "Sprint layer: included" : "Sprint layer: disabled",
                 _footstepsOptions.IncludeLanding ? "Landing layer: included" : "Landing layer: disabled",
                 _footstepsOptions.IncludeGear ? "Gear / cloth companion: included" : "Gear / cloth companion: disabled"
@@ -309,8 +343,10 @@ namespace ForgeBlueprint
             else
             {
                 items.Add($"Event: ev_{prefix}_footsteps_walk");
+
                 if (_footstepsOptions.IncludeSprint)
                     items.Add($"Event: ev_{prefix}_footsteps_sprint");
+
                 if (_footstepsOptions.IncludeLanding)
                     items.Add($"Event: ev_{prefix}_footsteps_landing");
             }
@@ -420,216 +456,6 @@ namespace ForgeBlueprint
             text = Regex.Replace(text, @"_+", "_").Trim('_');
 
             return string.IsNullOrWhiteSpace(text) ? fallback : text;
-        }
-
-        private static List<BlueprintListItem> CreateBlueprints()
-        {
-            return new List<BlueprintListItem>
-            {
-                new BlueprintListItem
-                {
-                    Key = "footsteps",
-                    Name = "Footsteps Starter",
-                    BlueprintType = "System",
-                    Middleware = "FMOD",
-                    Category = "Traversal",
-                    Summary = "Creates a strong starting shell for character footsteps with common surfaces and room for sprint and landing expansion.",
-                    ImplementationGoal = "Set up a reusable footstep implementation structure that can evolve from simple one-shots into a full surface-driven system.",
-                    PreviewLead = "This blueprint is ideal as the first real ForgeBlueprint generator because it mixes structure, routing, naming and configuration decisions."
-                },
-                new BlueprintListItem
-                {
-                    Key = "ui2d",
-                    Name = "UI 2D Starter",
-                    BlueprintType = "System",
-                    Middleware = "FMOD",
-                    Category = "Interface",
-                    Summary = "Builds a clean 2D UI structure with common feedback categories for navigation, confirmations and warnings.",
-                    ImplementationGoal = "Give menus and HUD feedback a clean and reusable implementation shell from minute one.",
-                    PreviewLead = "This blueprint focuses on fast setup, consistency and naming order rather than complex audio logic.",
-                    Options = new List<string>
-                    {
-                        "2D event setup by default",
-                        "Menu / HUD / notification split",
-                        "Optional hover / click / back / confirm families",
-                        "Error and reward feedback placeholders"
-                    },
-                    GeneratedItems = new List<string>
-                    {
-                        "Event group for buttons and menu interactions",
-                        "Notification category shell",
-                        "Errors / rewards / transitions structure",
-                        "UI naming convention starter"
-                    },
-                    Notes = new List<string>
-                    {
-                        "Great quick-win blueprint.",
-                        "Very useful for almost every game genre."
-                    }
-                },
-                new BlueprintListItem
-                {
-                    Key = "weaponbasic",
-                    Name = "Weapon Basic Starter",
-                    BlueprintType = "System",
-                    Middleware = "FMOD",
-                    Category = "Combat",
-                    Summary = "Sets up a compact weapon implementation structure for swings, impacts and optional sweeteners.",
-                    ImplementationGoal = "Avoid rebuilding the same combat skeleton each time a new project starts.",
-                    PreviewLead = "This is a strong second-step blueprint after footsteps.",
-                    Options = new List<string>
-                    {
-                        "2D or 3D choice depending on game camera",
-                        "Swing and impact families",
-                        "Optional cloth / body / armor splits",
-                        "Optional layered sweetener track"
-                    },
-                    GeneratedItems = new List<string>
-                    {
-                        "Weapon master category",
-                        "Swing event shell",
-                        "Impact family structure",
-                        "Variation-ready folders"
-                    },
-                    Notes = new List<string>
-                    {
-                        "Very useful for action games.",
-                        "Can later expand into melee / ranged / explosive presets."
-                    }
-                },
-                new BlueprintListItem
-                {
-                    Key = "3doneshot",
-                    Name = "3D One-Shot Starter",
-                    BlueprintType = "Event",
-                    Middleware = "FMOD",
-                    Category = "Generic",
-                    Summary = "Creates a generic 3D one-shot event template for fast implementation of world-based sounds.",
-                    ImplementationGoal = "Speed up repetitive authoring when a project needs many simple spatialized sounds.",
-                    PreviewLead = "This is one of the smallest useful building blocks and later can become a macro generator.",
-                    Options = new List<string>
-                    {
-                        "3D spatialization base",
-                        "Optional max distance preset",
-                        "Optional random multi-variation shell"
-                    },
-                    GeneratedItems = new List<string>
-                    {
-                        "Single event shell",
-                        "3D ready routing",
-                        "Distance / variation placeholders"
-                    },
-                    Notes = new List<string>
-                    {
-                        "Good micro-blueprint.",
-                        "Useful inside larger project templates."
-                    }
-                },
-                new BlueprintListItem
-                {
-                    Key = "metroidvania",
-                    Name = "Metroidvania Audio Starter",
-                    BlueprintType = "Project",
-                    Middleware = "FMOD",
-                    Category = "Genre Template",
-                    Summary = "A higher-level project scaffold for character traversal, ambience, enemies, UI and adaptive exploration cues.",
-                    ImplementationGoal = "Kick off a full middleware architecture tailored to a side-scrolling exploration game.",
-                    PreviewLead = "Project blueprints come after system blueprints, but this preview helps define the long-term vision.",
-                    Options = new List<string>
-                    {
-                        "Traversal and movement categories",
-                        "Enemy and boss separation",
-                        "Exploration ambience shell",
-                        "UI and map feedback layer",
-                        "Music ready grouping"
-                    },
-                    GeneratedItems = new List<string>
-                    {
-                        "Top-level category layout",
-                        "Bus and routing starter",
-                        "System blueprint insertion points"
-                    },
-                    Notes = new List<string>
-                    {
-                        "Not for the first implementation pass.",
-                        "Useful later when the core generator is stable."
-                    }
-                },
-                new BlueprintListItem
-                {
-                    Key = "towerdefense",
-                    Name = "Tower Defense Audio Starter",
-                    BlueprintType = "Project",
-                    Middleware = "FMOD",
-                    Category = "Genre Template",
-                    Summary = "A project scaffold focused on waves, tower actions, enemy reads, notifications and top-down clarity.",
-                    ImplementationGoal = "Standardize the first middleware pass for strategy-oriented games with repeated gameplay loops.",
-                    PreviewLead = "Another future-facing project blueprint once the system generators are proven.",
-                    Options = new List<string>
-                    {
-                        "Towers, enemies and UI categories",
-                        "Wave progression feedback shell",
-                        "Notification and alert structure",
-                        "Music escalation entry points"
-                    },
-                    GeneratedItems = new List<string>
-                    {
-                        "Genre-based top-level layout",
-                        "Gameplay feedback families",
-                        "System blueprint docking points"
-                    },
-                    Notes = new List<string>
-                    {
-                        "Good long-term template target.",
-                        "Not needed for the first coding milestone."
-                    }
-                }
-            };
-        }
-    }
-
-    public sealed class BlueprintListItem
-    {
-        public string Key { get; set; } = "";
-        public string Name { get; set; } = "";
-        public string BlueprintType { get; set; } = "";
-        public string Middleware { get; set; } = "";
-        public string Category { get; set; } = "";
-        public string Summary { get; set; } = "";
-        public string ImplementationGoal { get; set; } = "";
-        public string PreviewLead { get; set; } = "";
-        public List<string> Options { get; set; } = new();
-        public List<string> GeneratedItems { get; set; } = new();
-        public List<string> Notes { get; set; } = new();
-    }
-
-    public sealed class FootstepsBlueprintOptions
-    {
-        public string SpatialMode { get; set; } = "3D";
-        public string EventStructure { get; set; } = "Single Master Event";
-        public string NamingPrefix { get; set; } = "char";
-
-        public bool IncludeWater { get; set; } = true;
-        public bool IncludeSprint { get; set; } = true;
-        public bool IncludeLanding { get; set; } = true;
-        public bool IncludeGear { get; set; } = false;
-
-        public List<string> GetSurfaceNames()
-        {
-            List<string> surfaces = new()
-            {
-                "Stone",
-                "Dirt",
-                "Grass",
-                "Wood"
-            };
-
-            if (IncludeWater)
-            {
-                surfaces.Add("Water");
-            }
-
-            return surfaces;
         }
     }
 }
