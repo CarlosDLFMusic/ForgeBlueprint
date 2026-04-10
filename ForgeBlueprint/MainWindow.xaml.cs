@@ -440,8 +440,8 @@ namespace ForgeBlueprint
                 : "Assets/forgevault_logo.png");
 
             HeaderWordmarkImage.Source = LoadPackBitmap(isLight
-                ? "Assets/forgevault_tipo_inv.png"
-                : "Assets/forgevault_tipo.png");
+                ? "Assets/ForgeBlueprint_tipo_inv.png"
+                : "Assets/ForgeBlueprint_tipo.png");
         }
 
         private static BitmapImage LoadPackBitmap(string relativePath)

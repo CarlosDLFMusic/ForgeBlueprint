@@ -9,10 +9,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Assets\ForgeBlueprint_tipo.png" />
+    <None Remove="Assets\ForgeBlueprint_tipo_inv.png" />
     <None Remove="Assets\forgevault_logo.png" />
     <None Remove="Assets\forgevault_logo_inv.png" />
-    <None Remove="Assets\forgevault_tipo.png" />
-    <None Remove="Assets\forgevault_tipo_inv.png" />
     <None Remove="Assets\Icons\forgevault_logo.ico" />
   </ItemGroup>
 
@@ -23,10 +23,14 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Resource Include="Assets\ForgeBlueprint_tipo.png">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Assets\ForgeBlueprint_tipo_inv.png">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Resource>
     <Resource Include="Assets\forgevault_logo.png" />
     <Resource Include="Assets\forgevault_logo_inv.png" />
-    <Resource Include="Assets\forgevault_tipo.png" />
-    <Resource Include="Assets\forgevault_tipo_inv.png" />
     <Resource Include="Assets\Icons\forgevault_logo.ico" />
   </ItemGroup>
 
