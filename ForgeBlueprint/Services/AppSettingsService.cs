@@ -13,7 +13,7 @@ namespace ForgeBlueprint.Services
         };
 
         public string SettingsFolderPath =>
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ForgeVault");
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ForgeBlueprint");
 
         public string SettingsFilePath =>
             Path.Combine(SettingsFolderPath, "settings.json");

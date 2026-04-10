@@ -1,7 +1,9 @@
 ﻿using ForgeBlueprint.Models;
 using ForgeBlueprint.Services;
+using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Windows;
@@ -16,6 +18,8 @@ namespace ForgeBlueprint
     {
         private readonly AppSettingsService _appSettingsService = new();
         private readonly BlueprintLibraryService _blueprintLibraryService = new();
+        private readonly RecipeExportService _recipeExportService = new();
+        private readonly FootstepsBlueprintGenerator _footstepsBlueprintGenerator = new();
         private readonly FootstepsBlueprintOptions _footstepsOptions = new();
 
         private List<BlueprintDefinition> _allBlueprints = new();
@@ -158,11 +162,90 @@ namespace ForgeBlueprint
                 return;
             }
 
-            MessageBox.Show(
-                $"Generation logic will come next.\n\nCurrent blueprint: {selected.Name}",
-                "Generate",
-                MessageBoxButton.OK,
-                MessageBoxImage.Information);
+            try
+            {
+                GenerationRecipe recipe = BuildRecipeForSelectedBlueprint(selected);
+
+                SaveFileDialog dialog = new SaveFileDialog
+                {
+                    Title = "Export generation recipe",
+                    Filter = "JSON files (*.json)|*.json|All files (*.*)|*.*",
+                    DefaultExt = ".json",
+                    AddExtension = true,
+                    FileName = GetSuggestedRecipeFileName(selected)
+                };
+
+                string defaultFolder = App.CurrentSettings.DefaultExportFolder;
+                if (!string.IsNullOrWhiteSpace(defaultFolder) && Directory.Exists(defaultFolder))
+                {
+                    dialog.InitialDirectory = defaultFolder;
+                }
+
+                bool? result = dialog.ShowDialog(this);
+                if (result != true)
+                {
+                    StatusTitleTextBlock.Text = "Generation cancelled";
+                    StatusSubtitleTextBlock.Text = "No recipe file was exported.";
+                    return;
+                }
+
+                _recipeExportService.ExportToJson(recipe, dialog.FileName);
+
+                string exportFolder = Path.GetDirectoryName(dialog.FileName) ?? string.Empty;
+                if (!string.IsNullOrWhiteSpace(exportFolder))
+                {
+                    App.CurrentSettings.DefaultExportFolder = exportFolder;
+                    _appSettingsService.Save(App.CurrentSettings);
+                }
+
+                StatusTitleTextBlock.Text = "Recipe exported";
+                StatusSubtitleTextBlock.Text = Path.GetFileName(dialog.FileName);
+
+                MessageBox.Show(
+                    $"Recipe exported successfully.\n\n{dialog.FileName}",
+                    "ForgeBlueprint",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+            }
+            catch (NotSupportedException ex)
+            {
+                StatusTitleTextBlock.Text = "Generation not available";
+                StatusSubtitleTextBlock.Text = ex.Message;
+
+                MessageBox.Show(ex.Message, "Generate", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                StatusTitleTextBlock.Text = "Generation failed";
+                StatusSubtitleTextBlock.Text = ex.Message;
+
+                MessageBox.Show(
+                    $"An error occurred while generating the recipe.\n\n{ex.Message}",
+                    "Generate",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+        }
+
+        private GenerationRecipe BuildRecipeForSelectedBlueprint(BlueprintDefinition selected)
+        {
+            if (string.Equals(selected.Key, "footsteps", StringComparison.OrdinalIgnoreCase))
+            {
+                return _footstepsBlueprintGenerator.Generate(selected, _footstepsOptions);
+            }
+
+            throw new NotSupportedException(
+                $"The blueprint '{selected.Name}' is not implemented yet. Footsteps Starter is the first real generator.");
+        }
+
+        private string GetSuggestedRecipeFileName(BlueprintDefinition selected)
+        {
+            if (string.Equals(selected.Key, "footsteps", StringComparison.OrdinalIgnoreCase))
+            {
+                return $"{selected.Key}_{_footstepsOptions.NamingPrefix}_recipe.json";
+            }
+
+            return $"{selected.Key}_recipe.json";
         }
 
         private void RefreshBlueprintLibrary()
