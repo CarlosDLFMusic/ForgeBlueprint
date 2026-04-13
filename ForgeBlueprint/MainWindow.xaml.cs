@@ -19,6 +19,7 @@ namespace ForgeBlueprint
         private readonly AppSettingsService _appSettingsService = new();
         private readonly BlueprintLibraryService _blueprintLibraryService = new();
         private readonly RecipeExportService _recipeExportService = new();
+        private readonly PresetService _presetService = new();
         private readonly FootstepsBlueprintGenerator _footstepsBlueprintGenerator = new();
         private readonly FootstepsBlueprintOptions _footstepsOptions = new();
 
@@ -145,11 +146,106 @@ namespace ForgeBlueprint
                 return;
             }
 
-            MessageBox.Show(
-                $"Preset saving will come next.\n\nCurrent selection: {selected.Name}",
-                "Save Preset",
-                MessageBoxButton.OK,
-                MessageBoxImage.Information);
+            try
+            {
+                BlueprintPreset preset = BuildPresetForSelectedBlueprint(selected);
+                string suggestedFileName = _presetService.BuildSuggestedPresetFileName(selected.Key, preset.PresetName);
+                string presetsFolder = _presetService.GetBlueprintPresetsFolderPath(selected.Key);
+                Directory.CreateDirectory(presetsFolder);
+
+                SaveFileDialog dialog = new SaveFileDialog
+                {
+                    Title = "Save blueprint preset",
+                    Filter = "JSON files (*.json)|*.json|All files (*.*)|*.*",
+                    DefaultExt = ".json",
+                    AddExtension = true,
+                    InitialDirectory = presetsFolder,
+                    FileName = suggestedFileName
+                };
+
+                bool? result = dialog.ShowDialog(this);
+                if (result != true)
+                {
+                    StatusTitleTextBlock.Text = "Preset save cancelled";
+                    StatusSubtitleTextBlock.Text = "No preset file was written.";
+                    return;
+                }
+
+                _presetService.SavePreset(preset, dialog.FileName);
+
+                StatusTitleTextBlock.Text = "Preset saved";
+                StatusSubtitleTextBlock.Text = Path.GetFileName(dialog.FileName);
+
+                
+            }
+            catch (NotSupportedException ex)
+            {
+                StatusTitleTextBlock.Text = "Preset not available";
+                StatusSubtitleTextBlock.Text = ex.Message;
+
+                MessageBox.Show(ex.Message, "Save Preset", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                StatusTitleTextBlock.Text = "Preset save failed";
+                StatusSubtitleTextBlock.Text = ex.Message;
+
+                
+            }
+        }
+
+        private BlueprintPreset BuildPresetForSelectedBlueprint(BlueprintDefinition selected)
+        {
+            if (string.Equals(selected.Key, "footsteps", StringComparison.OrdinalIgnoreCase))
+            {
+                return _presetService.CreateFootstepsPreset(selected, _footstepsOptions, GetSuggestedFootstepsPresetName());
+            }
+
+            throw new NotSupportedException(
+                $"The blueprint '{selected.Name}' does not support presets yet. Footsteps Starter is the first preset-enabled blueprint.");
+        }
+
+        private string GetSuggestedFootstepsPresetName()
+        {
+            string prefix = string.IsNullOrWhiteSpace(_footstepsOptions.NamingPrefix)
+                ? "char"
+                : _footstepsOptions.NamingPrefix;
+
+            return $"footsteps_{prefix}";
+        }
+
+        private bool TryLoadFootstepsPresetFromFile(string filePath)
+        {
+            BlueprintPreset preset = _presetService.LoadPreset(filePath);
+
+            if (!string.Equals(preset.BlueprintKey, "footsteps", StringComparison.OrdinalIgnoreCase))
+                throw new InvalidOperationException("This preset does not belong to Footsteps Starter.");
+
+            if (preset.FootstepsOptions == null)
+                throw new InvalidOperationException("The preset file does not contain footsteps options.");
+
+            ApplyFootstepsPreset(preset.FootstepsOptions);
+            return true;
+        }
+
+        private void ApplyFootstepsPreset(FootstepsBlueprintOptions options)
+        {
+            if (options == null)
+                throw new ArgumentNullException(nameof(options));
+
+            _footstepsOptions.SpatialMode = string.IsNullOrWhiteSpace(options.SpatialMode) ? "3D" : options.SpatialMode;
+            _footstepsOptions.EventStructure = string.IsNullOrWhiteSpace(options.EventStructure) ? "Single Master Event" : options.EventStructure;
+            _footstepsOptions.NamingPrefix = SanitizeToken(options.NamingPrefix, "char");
+            _footstepsOptions.IncludeWater = options.IncludeWater;
+            _footstepsOptions.IncludeSprint = options.IncludeSprint;
+            _footstepsOptions.IncludeLanding = options.IncludeLanding;
+            _footstepsOptions.IncludeGear = options.IncludeGear;
+
+            LoadFootstepsControlsIntoUi();
+            UpdateFootstepsPreview();
+
+            StatusTitleTextBlock.Text = "Preset loaded";
+            StatusSubtitleTextBlock.Text = $"Footsteps preset applied: {_footstepsOptions.NamingPrefix}";
         }
 
         private void GenerateButton_Click(object sender, RoutedEventArgs e)
