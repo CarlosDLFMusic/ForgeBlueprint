@@ -59,8 +59,8 @@
         </Style>
 
         <ControlTemplate x:Key="VerticalScrollBarTemplate" TargetType="{x:Type ScrollBar}">
-            <Grid Width="12" Background="Transparent">
-                <Border Width="8"
+            <Grid Width="8" Background="Transparent">
+                <Border Width="5"
                         HorizontalAlignment="Center"
                         Background="{DynamicResource SurfaceBrush}"
                         CornerRadius="4" />
@@ -88,8 +88,8 @@
         </ControlTemplate>
 
         <ControlTemplate x:Key="HorizontalScrollBarTemplate" TargetType="{x:Type ScrollBar}">
-            <Grid Height="12" Background="Transparent">
-                <Border Height="8"
+            <Grid Height="8" Background="Transparent">
+                <Border Height="5"
                         VerticalAlignment="Center"
                         Background="{DynamicResource SurfaceBrush}"
                         CornerRadius="4" />
@@ -391,16 +391,28 @@
                                               Content="{TemplateBinding SelectionBoxItem}"
                                               ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}" />
 
-                            <Grid Width="36"
-                                  HorizontalAlignment="Right">
-                                <Path Data="M 0 0 L 4 4 L 8 0"
-                                      Stroke="{DynamicResource TextSecondaryBrush}"
-                                      StrokeThickness="1.6"
-                                      StrokeStartLineCap="Round"
-                                      StrokeEndLineCap="Round"
-                                      HorizontalAlignment="Center"
-                                      VerticalAlignment="Center" />
-                            </Grid>
+                            <ToggleButton x:Name="DropDownToggle"
+                                          Width="36"
+                                          HorizontalAlignment="Right"
+                                          Focusable="False"
+                                          ClickMode="Press"
+                                          IsChecked="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
+                                <ToggleButton.Template>
+                                    <ControlTemplate TargetType="ToggleButton">
+                                        <Border Background="Transparent"
+                                                BorderThickness="0"
+                                                CornerRadius="0">
+                                            <Path Data="M 0 0 L 4 4 L 8 0"
+                                                  Stroke="{DynamicResource TextSecondaryBrush}"
+                                                  StrokeThickness="1.6"
+                                                  StrokeStartLineCap="Round"
+                                                  StrokeEndLineCap="Round"
+                                                  HorizontalAlignment="Center"
+                                                  VerticalAlignment="Center" />
+                                        </Border>
+                                    </ControlTemplate>
+                                </ToggleButton.Template>
+                            </ToggleButton>
 
                             <Popup x:Name="PART_Popup"
                                    Placement="Bottom"
