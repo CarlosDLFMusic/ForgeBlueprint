@@ -1,7 +1,6 @@
 ﻿using ForgeBlueprint.Models;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace ForgeBlueprint.Services
 {
@@ -28,10 +27,10 @@ namespace ForgeBlueprint.Services
                 NamingPrefix = prefix,
 
                 OptionSummary = BuildOptionSummary(options, surfaceNames),
-                Folders = BuildFolders(prefix, surfaceNames, options),
+                Folders = BuildFolders(prefix, surfaceNames),
                 Events = BuildEvents(prefix, options),
-                Buses = BuildBuses(options),
-                Parameters = BuildParameters(options, surfaceNames),
+                Buses = BuildBuses(),
+                Parameters = BuildParameters(surfaceNames),
                 RoutingNotes = BuildRoutingNotes(options),
                 Warnings = BuildWarnings(options),
                 NextSteps = BuildNextSteps(prefix, options)
@@ -43,20 +42,15 @@ namespace ForgeBlueprint.Services
             return new List<string>
             {
                 $"Spatial mode: {options.SpatialMode}",
-                $"Event structure: {options.EventStructure}",
                 $"Naming prefix: {options.NamingPrefix}",
+                "Event model: single Footsteps master event",
+                "Surface parameter: Surfaces",
                 $"Surfaces: {string.Join(", ", surfaceNames)}",
-                options.IncludeWater ? "Water surface: included" : "Water surface: disabled",
-                options.IncludeSprint ? "Sprint layer: included" : "Sprint layer: disabled",
-                options.IncludeLanding ? "Landing layer: included" : "Landing layer: disabled",
-                options.IncludeGear ? "Gear / cloth companion: included" : "Gear / cloth companion: disabled"
+                options.IncludeGear ? "Gear / cloth companion track: included" : "Gear / cloth companion track: disabled"
             };
         }
 
-        private static List<GeneratedFolder> BuildFolders(
-            string prefix,
-            List<string> surfaceNames,
-            FootstepsBlueprintOptions options)
+        private static List<GeneratedFolder> BuildFolders(string prefix, List<string> surfaceNames)
         {
             List<GeneratedFolder> folders = new()
             {
@@ -86,82 +80,30 @@ namespace ForgeBlueprint.Services
                 });
             }
 
-            if (options.IncludeGear)
-            {
-                folders.Add(new GeneratedFolder
-                {
-                    Path = $"Events/Characters/{prefix}/Gear",
-                    Purpose = "Companion gear or cloth movement events."
-                });
-            }
-
             return folders;
         }
 
         private static List<GeneratedEvent> BuildEvents(string prefix, FootstepsBlueprintOptions options)
         {
-            List<GeneratedEvent> events = new();
+            string purpose = options.IncludeGear
+                ? "Single footsteps event driven by the Surfaces parameter, with an additional gear / cloth companion logic track."
+                : "Single footsteps event driven by the Surfaces parameter, with one dedicated logic track per surface.";
 
-            if (string.Equals(options.EventStructure, "Single Master Event", StringComparison.OrdinalIgnoreCase))
+            return new List<GeneratedEvent>
             {
-                events.Add(new GeneratedEvent
+                new GeneratedEvent
                 {
-                    Path = $"event:/characters/{prefix}/footsteps/ev_{prefix}_footsteps_master",
+                    Path = $"event:/characters/{prefix}/footsteps/ev_{prefix}_footsteps",
                     SpatialMode = options.SpatialMode,
-                    Purpose = "Single master footsteps event that switches behavior by parameters.",
+                    Purpose = purpose,
                     TriggerSuggestion = "Drive with animation notifies or gameplay movement callbacks."
-                });
-            }
-            else
-            {
-                events.Add(new GeneratedEvent
-                {
-                    Path = $"event:/characters/{prefix}/footsteps/ev_{prefix}_footsteps_walk",
-                    SpatialMode = options.SpatialMode,
-                    Purpose = "Walk footsteps event.",
-                    TriggerSuggestion = "Call from standard locomotion footsteps."
-                });
-
-                if (options.IncludeSprint)
-                {
-                    events.Add(new GeneratedEvent
-                    {
-                        Path = $"event:/characters/{prefix}/footsteps/ev_{prefix}_footsteps_sprint",
-                        SpatialMode = options.SpatialMode,
-                        Purpose = "Sprint footsteps event.",
-                        TriggerSuggestion = "Call from sprint movement state."
-                    });
                 }
-
-                if (options.IncludeLanding)
-                {
-                    events.Add(new GeneratedEvent
-                    {
-                        Path = $"event:/characters/{prefix}/footsteps/ev_{prefix}_footsteps_landing",
-                        SpatialMode = options.SpatialMode,
-                        Purpose = "Landing event for heavier foot contacts.",
-                        TriggerSuggestion = "Call on jump landing or drop impact."
-                    });
-                }
-            }
-
-            if (options.IncludeGear)
-            {
-                events.Add(new GeneratedEvent
-                {
-                    Path = $"event:/characters/{prefix}/gear/ev_{prefix}_gear_movement",
-                    SpatialMode = options.SpatialMode,
-                    Purpose = "Companion gear or cloth movement layer.",
-                    TriggerSuggestion = "Trigger alongside footsteps or from movement state changes."
-                });
-            }
-
-            return events;
+            };
         }
 
-        private static List<GeneratedBus> BuildBuses(FootstepsBlueprintOptions options)
+        private static List<GeneratedBus> BuildBuses()
         {
-            List<GeneratedBus> buses = new()
+            return new List<GeneratedBus>
             {
                 new GeneratedBus
                 {
@@ -169,69 +111,33 @@ namespace ForgeBlueprint.Services
                     Purpose = "Main footsteps routing bus."
                 }
             };
-
-            if (options.IncludeGear)
-            {
-                buses.Add(new GeneratedBus
-                {
-                    Path = "bus:/SFX/Characters/Gear",
-                    Purpose = "Routing bus for cloth, armor or gear movement layers."
-                });
-            }
-
-            return buses;
         }
 
-        private static List<GeneratedParameter> BuildParameters(
-            FootstepsBlueprintOptions options,
-            List<string> surfaceNames)
+        private static List<GeneratedParameter> BuildParameters(List<string> surfaceNames)
         {
-            List<GeneratedParameter> parameters = new()
+            return new List<GeneratedParameter>
             {
                 new GeneratedParameter
                 {
-                    Name = "surface",
+                    Name = "Surfaces",
                     Scope = "Event",
-                    Description = "Selects the active material or terrain family.",
-                    Values = surfaceNames.Select(x => x.ToLowerInvariant()).ToList()
+                    Description = "Selects the active terrain logic track inside the master footsteps event.",
+                    Values = new List<string>(surfaceNames)
                 }
             };
-
-            if (string.Equals(options.EventStructure, "Single Master Event", StringComparison.OrdinalIgnoreCase))
-            {
-                List<string> movementValues = new() { "walk" };
-
-                if (options.IncludeSprint)
-                    movementValues.Add("sprint");
-
-                if (options.IncludeLanding)
-                    movementValues.Add("landing");
-
-                if (movementValues.Count > 1)
-                {
-                    parameters.Add(new GeneratedParameter
-                    {
-                        Name = "movement_layer",
-                        Scope = "Event",
-                        Description = "Chooses the movement family inside the master event.",
-                        Values = movementValues
-                    });
-                }
-            }
-
-            return parameters;
         }
 
         private static List<string> BuildRoutingNotes(FootstepsBlueprintOptions options)
         {
             List<string> notes = new()
             {
-                "Route the main footsteps system to bus:/SFX/Characters/Footsteps."
+                "Route the footsteps event to bus:/SFX/Characters/Footsteps.",
+                "Each surface should live on its own logic track and respond to the discrete Surfaces parameter."
             };
 
             if (options.IncludeGear)
             {
-                notes.Add("Route the gear companion layer to bus:/SFX/Characters/Gear.");
+                notes.Add("Add a companion gear / cloth logic track inside the same event so it can layer with every surface.");
             }
 
             if (string.Equals(options.SpatialMode, "3D", StringComparison.OrdinalIgnoreCase))
@@ -248,25 +154,14 @@ namespace ForgeBlueprint.Services
 
         private static List<string> BuildWarnings(FootstepsBlueprintOptions options)
         {
-            List<string> warnings = new();
-
-            if (string.Equals(options.EventStructure, "Single Master Event", StringComparison.OrdinalIgnoreCase))
+            List<string> warnings = new()
             {
-                warnings.Add("Single master event requires careful parameter routing for surface and movement states.");
-            }
-            else
-            {
-                warnings.Add("Split event mode requires separate gameplay or animation routing for each event family.");
-            }
-
-            if (!options.IncludeWater)
-            {
-                warnings.Add("Water is disabled, so wet traversal cases will need to be added later if the project needs them.");
-            }
+                "Sprint and landing are intentionally left out of this blueprint and should be authored as separate events."
+            };
 
             if (options.IncludeGear && string.Equals(options.SpatialMode, "2D", StringComparison.OrdinalIgnoreCase))
             {
-                warnings.Add("2D + gear companion may need extra mix decisions to avoid clutter.");
+                warnings.Add("2D + gear / cloth layering may need extra mix decisions to avoid clutter.");
             }
 
             return warnings;
@@ -277,18 +172,15 @@ namespace ForgeBlueprint.Services
             List<string> steps = new()
             {
                 $"Create the FMOD event shell using the naming prefix '{prefix}'.",
-                "Add random or multi-instrument variation structure per surface.",
+                "Add a discrete Surfaces parameter with values for Concrete, Dirt, Grass, Rock, Wood, Snow, Sand, Mud and Water.",
+                "Create one logic track per surface and place the corresponding multi instrument and random variations on each track.",
                 "Connect the gameplay side through animation notifies, traces or movement callbacks.",
                 "Validate the routing and mix level against the rest of the character SFX."
             };
 
-            if (string.Equals(options.EventStructure, "Single Master Event", StringComparison.OrdinalIgnoreCase))
+            if (options.IncludeGear)
             {
-                steps.Add("Implement parameter-driven logic for surface and movement_layer.");
-            }
-            else
-            {
-                steps.Add("Wire walk, sprint and landing as separate gameplay triggers.");
+                steps.Add("Add a dedicated gear / cloth companion track that can layer on top of any surface trigger.");
             }
 
             return steps;

@@ -16,9 +16,9 @@ namespace ForgeBlueprint.Services
                     BlueprintType = "System",
                     Middleware = "FMOD",
                     Category = "Traversal",
-                    Summary = "Creates a strong starting shell for character footsteps with common surfaces and room for sprint and landing expansion.",
-                    ImplementationGoal = "Set up a reusable footstep implementation structure that can evolve from simple one-shots into a full surface-driven system.",
-                    PreviewLead = "This blueprint is ideal as the first real ForgeBlueprint generator because it mixes structure, routing, naming and configuration decisions.",
+                    Summary = "Creates a strong FMOD footsteps shell built around one master event, a Surfaces parameter and dedicated logic tracks for the core terrain set.",
+                    ImplementationGoal = "Set up a reusable surface-driven footsteps implementation with one master event, a discrete Surfaces parameter and optional gear / cloth layering.",
+                    PreviewLead = "This blueprint now mirrors a more production-ready FMOD setup: one Footsteps event, one Surfaces parameter and one logic track per surface.",
                     HasConfigurableOptions = true
                 },
                 new BlueprintDefinition

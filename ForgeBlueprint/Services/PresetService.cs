@@ -91,11 +91,7 @@ namespace ForgeBlueprint.Services
             return new FootstepsBlueprintOptions
             {
                 SpatialMode = options.SpatialMode,
-                EventStructure = options.EventStructure,
                 NamingPrefix = options.NamingPrefix,
-                IncludeWater = options.IncludeWater,
-                IncludeSprint = options.IncludeSprint,
-                IncludeLanding = options.IncludeLanding,
                 IncludeGear = options.IncludeGear
             };
         }

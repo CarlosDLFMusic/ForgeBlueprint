@@ -64,12 +64,6 @@ namespace ForgeBlueprint
         private void InitializeFootstepsControls()
         {
             SpatialModeComboBox.ItemsSource = new List<string> { "3D", "2D" };
-            EventStructureComboBox.ItemsSource = new List<string>
-            {
-                "Single Master Event",
-                "Split by movement layer"
-            };
-
             LoadFootstepsControlsIntoUi();
         }
 
@@ -80,12 +74,7 @@ namespace ForgeBlueprint
             try
             {
                 SpatialModeComboBox.SelectedItem = _footstepsOptions.SpatialMode;
-                EventStructureComboBox.SelectedItem = _footstepsOptions.EventStructure;
                 NamingPrefixTextBox.Text = _footstepsOptions.NamingPrefix;
-
-                IncludeWaterCheckBox.IsChecked = _footstepsOptions.IncludeWater;
-                IncludeSprintCheckBox.IsChecked = _footstepsOptions.IncludeSprint;
-                IncludeLandingCheckBox.IsChecked = _footstepsOptions.IncludeLanding;
                 IncludeGearCheckBox.IsChecked = _footstepsOptions.IncludeGear;
             }
             finally
@@ -136,6 +125,78 @@ namespace ForgeBlueprint
                 MessageBoxImage.Information);
         }
 
+        private void LoadPresetButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                string presetsFolder = _presetService.GetBlueprintPresetsFolderPath("footsteps");
+                Directory.CreateDirectory(presetsFolder);
+
+                OpenFileDialog dialog = new OpenFileDialog
+                {
+                    Title = "Load preset",
+                    Filter = "JSON files (*.json)|*.json|All files (*.*)|*.*",
+                    DefaultExt = ".json",
+                    CheckFileExists = true,
+                    InitialDirectory = presetsFolder
+                };
+
+                bool? result = dialog.ShowDialog(this);
+                if (result != true)
+                {
+                    StatusTitleTextBlock.Text = "Preset loading cancelled";
+                    StatusSubtitleTextBlock.Text = "No preset file was selected.";
+                    return;
+                }
+
+                BlueprintDefinition? footstepsBlueprint = _allBlueprints.FirstOrDefault(item =>
+                    string.Equals(item.Key, "footsteps", StringComparison.OrdinalIgnoreCase));
+
+                if (footstepsBlueprint == null)
+                    throw new InvalidOperationException("Footsteps Starter blueprint was not found in the library.");
+
+                if (!string.Equals((BlueprintListBox.SelectedItem as BlueprintDefinition)?.Key, "footsteps", StringComparison.OrdinalIgnoreCase))
+                {
+                    BlueprintListBox.SelectedItem = footstepsBlueprint;
+                }
+
+                bool loaded = TryLoadFootstepsPresetFromFile(dialog.FileName);
+                if (!loaded)
+                {
+                    StatusTitleTextBlock.Text = "Preset not loaded";
+                    StatusSubtitleTextBlock.Text = "The selected file is not a valid Footsteps preset.";
+
+                    MessageBox.Show(
+                        "The selected file is not a valid Footsteps preset.",
+                        "Load Preset",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
+
+                    return;
+                }
+
+                StatusTitleTextBlock.Text = "Preset loaded";
+                StatusSubtitleTextBlock.Text = Path.GetFileName(dialog.FileName);
+
+                MessageBox.Show(
+                    $"Preset loaded successfully.\n\n{dialog.FileName}",
+                    "ForgeBlueprint",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                StatusTitleTextBlock.Text = "Preset load failed";
+                StatusSubtitleTextBlock.Text = ex.Message;
+
+                MessageBox.Show(
+                    $"An error occurred while loading the preset.\n\n{ex.Message}",
+                    "Load Preset",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+        }
+
         private void SavePresetButton_Click(object sender, RoutedEventArgs e)
         {
             BlueprintDefinition? selected = BlueprintListBox.SelectedItem as BlueprintDefinition;
@@ -176,7 +237,11 @@ namespace ForgeBlueprint
                 StatusTitleTextBlock.Text = "Preset saved";
                 StatusSubtitleTextBlock.Text = Path.GetFileName(dialog.FileName);
 
-                
+                MessageBox.Show(
+                    $"Preset saved successfully.\n\n{dialog.FileName}",
+                    "ForgeBlueprint",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
             }
             catch (NotSupportedException ex)
             {
@@ -190,7 +255,11 @@ namespace ForgeBlueprint
                 StatusTitleTextBlock.Text = "Preset save failed";
                 StatusSubtitleTextBlock.Text = ex.Message;
 
-                
+                MessageBox.Show(
+                    $"An error occurred while saving the preset.\n\n{ex.Message}",
+                    "Save Preset",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
             }
         }
 
@@ -224,8 +293,28 @@ namespace ForgeBlueprint
             if (preset.FootstepsOptions == null)
                 throw new InvalidOperationException("The preset file does not contain footsteps options.");
 
+            EnsureBlueprintSelected("footsteps");
             ApplyFootstepsPreset(preset.FootstepsOptions);
             return true;
+        }
+
+        private void EnsureBlueprintSelected(string blueprintKey)
+        {
+            if (!string.Equals(_activeFilter, "All", StringComparison.OrdinalIgnoreCase))
+            {
+                _activeFilter = "All";
+                ApplyFilterButtonStates();
+                RefreshBlueprintLibrary();
+            }
+
+            BlueprintDefinition? blueprint = _allBlueprints.FirstOrDefault(item =>
+                string.Equals(item.Key, blueprintKey, StringComparison.OrdinalIgnoreCase));
+
+            if (blueprint == null)
+                throw new InvalidOperationException($"Blueprint '{blueprintKey}' was not found in the library.");
+
+            BlueprintListBox.SelectedItem = blueprint;
+            DisplaySelectedBlueprint(blueprint);
         }
 
         private void ApplyFootstepsPreset(FootstepsBlueprintOptions options)
@@ -234,18 +323,11 @@ namespace ForgeBlueprint
                 throw new ArgumentNullException(nameof(options));
 
             _footstepsOptions.SpatialMode = string.IsNullOrWhiteSpace(options.SpatialMode) ? "3D" : options.SpatialMode;
-            _footstepsOptions.EventStructure = string.IsNullOrWhiteSpace(options.EventStructure) ? "Single Master Event" : options.EventStructure;
             _footstepsOptions.NamingPrefix = SanitizeToken(options.NamingPrefix, "char");
-            _footstepsOptions.IncludeWater = options.IncludeWater;
-            _footstepsOptions.IncludeSprint = options.IncludeSprint;
-            _footstepsOptions.IncludeLanding = options.IncludeLanding;
             _footstepsOptions.IncludeGear = options.IncludeGear;
 
             LoadFootstepsControlsIntoUi();
             UpdateFootstepsPreview();
-
-            StatusTitleTextBlock.Text = "Preset loaded";
-            StatusSubtitleTextBlock.Text = $"Footsteps preset applied: {_footstepsOptions.NamingPrefix}";
         }
 
         private void GenerateButton_Click(object sender, RoutedEventArgs e)
@@ -472,12 +554,7 @@ namespace ForgeBlueprint
                 return;
 
             _footstepsOptions.SpatialMode = SpatialModeComboBox.SelectedItem as string ?? "3D";
-            _footstepsOptions.EventStructure = EventStructureComboBox.SelectedItem as string ?? "Single Master Event";
             _footstepsOptions.NamingPrefix = SanitizeToken(NamingPrefixTextBox.Text, "char");
-
-            _footstepsOptions.IncludeWater = IncludeWaterCheckBox.IsChecked == true;
-            _footstepsOptions.IncludeSprint = IncludeSprintCheckBox.IsChecked == true;
-            _footstepsOptions.IncludeLanding = IncludeLandingCheckBox.IsChecked == true;
             _footstepsOptions.IncludeGear = IncludeGearCheckBox.IsChecked == true;
 
             UpdateFootstepsPreview();
@@ -500,48 +577,31 @@ namespace ForgeBlueprint
             return new List<string>
             {
                 $"Spatial mode: {_footstepsOptions.SpatialMode}",
-                $"Event structure: {_footstepsOptions.EventStructure}",
                 $"Naming prefix: {_footstepsOptions.NamingPrefix}",
+                "Event model: single Footsteps master event",
+                "Surface parameter: Surfaces",
                 $"Surfaces: {surfaces}",
-                _footstepsOptions.IncludeWater ? "Water surface: included" : "Water surface: disabled",
-                _footstepsOptions.IncludeSprint ? "Sprint layer: included" : "Sprint layer: disabled",
-                _footstepsOptions.IncludeLanding ? "Landing layer: included" : "Landing layer: disabled",
-                _footstepsOptions.IncludeGear ? "Gear / cloth companion: included" : "Gear / cloth companion: disabled"
+                _footstepsOptions.IncludeGear
+                    ? "Gear / cloth companion track: included"
+                    : "Gear / cloth companion track: disabled"
             };
         }
 
         private List<string> BuildFootstepsGeneratedItems()
         {
             string prefix = _footstepsOptions.NamingPrefix;
-            List<string> items = new();
-
-            if (string.Equals(_footstepsOptions.EventStructure, "Single Master Event", StringComparison.OrdinalIgnoreCase))
+            List<string> items = new()
             {
-                items.Add($"Event: ev_{prefix}_footsteps_master");
-            }
-            else
-            {
-                items.Add($"Event: ev_{prefix}_footsteps_walk");
-
-                if (_footstepsOptions.IncludeSprint)
-                    items.Add($"Event: ev_{prefix}_footsteps_sprint");
-
-                if (_footstepsOptions.IncludeLanding)
-                    items.Add($"Event: ev_{prefix}_footsteps_landing");
-            }
-
-            items.Add($"Spatial setup: {_footstepsOptions.SpatialMode}");
-            items.Add($"Folders: {string.Join(", ", _footstepsOptions.GetSurfaceNames())}");
-            items.Add($"Naming guide: foot_{prefix}_surface_var##");
+                $"Event: ev_{prefix}_footsteps",
+                $"Spatial setup: {_footstepsOptions.SpatialMode}",
+                "Parameter: Surfaces",
+                $"Logic tracks: {string.Join(", ", _footstepsOptions.GetSurfaceNames())}",
+                $"Naming guide: foot_{prefix}_surface_var##"
+            };
 
             if (_footstepsOptions.IncludeGear)
             {
-                items.Add($"Companion event: ev_{prefix}_gear_movement");
-            }
-
-            if (_footstepsOptions.IncludeWater)
-            {
-                items.Add("Water surface extension included");
+                items.Add("Companion track: Gear / Cloth");
             }
 
             return items;
@@ -551,8 +611,9 @@ namespace ForgeBlueprint
         {
             List<string> notes = new()
             {
-                "This blueprint should be the first fully implemented generator in ForgeBlueprint.",
-                "It is representative because it mixes naming, routing, surfaces and optional layers."
+                "This blueprint now reflects a single FMOD footsteps event driven by a Surfaces parameter.",
+                "Each surface should live on its own logic track with a dedicated multi instrument and variation set.",
+                "Sprint and landing are intentionally left out of this blueprint so they can be authored as separate events."
             };
 
             if (string.Equals(_footstepsOptions.SpatialMode, "2D", StringComparison.OrdinalIgnoreCase))
@@ -564,18 +625,13 @@ namespace ForgeBlueprint
                 notes.Add("3D mode is better for world-space traversal and character-driven gameplay.");
             }
 
-            if (string.Equals(_footstepsOptions.EventStructure, "Split by movement layer", StringComparison.OrdinalIgnoreCase))
+            if (_footstepsOptions.IncludeGear)
             {
-                notes.Add("Split mode makes it easier to separate walk, sprint and landing logic.");
+                notes.Add("Gear / cloth can be layered as an extra companion logic track inside the same event.");
             }
             else
             {
-                notes.Add("Single master mode is faster for initial setup and easier to maintain.");
-            }
-
-            if (_footstepsOptions.IncludeGear)
-            {
-                notes.Add("Gear / cloth is enabled, so the system can scale into fuller character movement design.");
+                notes.Add("Gear / cloth remains disabled, so only the surface logic tracks are represented.");
             }
 
             return notes;
