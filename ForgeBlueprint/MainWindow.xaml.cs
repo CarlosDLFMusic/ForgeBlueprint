@@ -20,6 +20,7 @@ namespace ForgeBlueprint
         private readonly BlueprintLibraryService _blueprintLibraryService = new();
         private readonly FmodStudioScriptExportService _fmodStudioScriptExportService = new();
         private readonly PresetService _presetService = new();
+        private readonly FootstepsBlueprintGenerator _footstepsBlueprintGenerator = new();
         private readonly FootstepsBlueprintOptions _footstepsOptions = new();
 
         private List<BlueprintDefinition> _allBlueprints = new();
@@ -115,14 +116,6 @@ namespace ForgeBlueprint
             ApplyFilterButtonStates();
         }
 
-        private void SettingsButton_Click(object sender, RoutedEventArgs e)
-        {
-            MessageBox.Show(
-                "Settings panel will come next.\n\nFor now, the theme toggle is already working.",
-                "ForgeBlueprint",
-                MessageBoxButton.OK,
-                MessageBoxImage.Information);
-        }
 
         private void LoadPresetButton_Click(object sender, RoutedEventArgs e)
         {
@@ -580,22 +573,17 @@ namespace ForgeBlueprint
         private List<string> BuildFootstepsGeneratedItems()
         {
             string prefix = _footstepsOptions.NamingPrefix;
-            string displayPrefix = string.IsNullOrWhiteSpace(prefix)
-                ? "Character"
-                : char.ToUpperInvariant(prefix[0]) + prefix.Substring(1);
-
             List<string> items = new()
             {
-                $"Event: Footsteps_{displayPrefix}",
+                $"Event: ev_{prefix}_footsteps",
                 $"Spatial setup: {_footstepsOptions.SpatialMode}",
-                "Surface parameter: Surfaces",
-                $"Surface logic tracks: {string.Join(", ", _footstepsOptions.GetSurfaceNames())}",
-                $"Naming guide: foot_{prefix}_{{surface}}_var##"
+                "Parameter: Surfaces",
+                $"Logic tracks: {string.Join(", ", _footstepsOptions.GetSurfaceNames())}",
             };
 
             if (_footstepsOptions.IncludeGear)
             {
-                items.Add("Companion logic track: Gear / Cloth");
+                items.Add("Companion track: Gear / Cloth");
             }
 
             return items;
