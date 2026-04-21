@@ -18,9 +18,8 @@ namespace ForgeBlueprint
     {
         private readonly AppSettingsService _appSettingsService = new();
         private readonly BlueprintLibraryService _blueprintLibraryService = new();
-        private readonly RecipeExportService _recipeExportService = new();
+        private readonly FmodStudioScriptExportService _fmodStudioScriptExportService = new();
         private readonly PresetService _presetService = new();
-        private readonly FootstepsBlueprintGenerator _footstepsBlueprintGenerator = new();
         private readonly FootstepsBlueprintOptions _footstepsOptions = new();
 
         private List<BlueprintDefinition> _allBlueprints = new();
@@ -342,15 +341,13 @@ namespace ForgeBlueprint
 
             try
             {
-                GenerationRecipe recipe = BuildRecipeForSelectedBlueprint(selected);
-
                 SaveFileDialog dialog = new SaveFileDialog
                 {
-                    Title = "Export generation recipe",
-                    Filter = "JSON files (*.json)|*.json|All files (*.*)|*.*",
-                    DefaultExt = ".json",
+                    Title = "Export FMOD Studio script",
+                    Filter = "JavaScript files (*.js)|*.js|All files (*.*)|*.*",
+                    DefaultExt = ".js",
                     AddExtension = true,
-                    FileName = GetSuggestedRecipeFileName(selected)
+                    FileName = GetSuggestedFmodScriptFileName(selected)
                 };
 
                 string defaultFolder = App.CurrentSettings.DefaultExportFolder;
@@ -362,12 +359,12 @@ namespace ForgeBlueprint
                 bool? result = dialog.ShowDialog(this);
                 if (result != true)
                 {
-                    StatusTitleTextBlock.Text = "Generation cancelled";
-                    StatusSubtitleTextBlock.Text = "No recipe file was exported.";
+                    StatusTitleTextBlock.Text = "Export cancelled";
+                    StatusSubtitleTextBlock.Text = "No FMOD script file was written.";
                     return;
                 }
 
-                _recipeExportService.ExportToJson(recipe, dialog.FileName);
+                _fmodStudioScriptExportService.ExportScript(selected, _footstepsOptions, dialog.FileName);
 
                 string exportFolder = Path.GetDirectoryName(dialog.FileName) ?? string.Empty;
                 if (!string.IsNullOrWhiteSpace(exportFolder))
@@ -376,54 +373,47 @@ namespace ForgeBlueprint
                     _appSettingsService.Save(App.CurrentSettings);
                 }
 
-                StatusTitleTextBlock.Text = "Recipe exported";
+                StatusTitleTextBlock.Text = "FMOD script exported";
                 StatusSubtitleTextBlock.Text = Path.GetFileName(dialog.FileName);
 
                 MessageBox.Show(
-                    $"Recipe exported successfully.\n\n{dialog.FileName}",
+                    "FMOD Studio script exported successfully.\n\n" +
+                    "1. Copy the .js file into your FMOD project's Scripts folder or the global FMOD Scripts folder.\n" +
+                    "2. In FMOD Studio, use Scripts > Reload.\n" +
+                    "3. Run the new Scripts menu item created by the script.\n\n" +
+                    dialog.FileName,
                     "ForgeBlueprint",
                     MessageBoxButton.OK,
                     MessageBoxImage.Information);
             }
             catch (NotSupportedException ex)
             {
-                StatusTitleTextBlock.Text = "Generation not available";
+                StatusTitleTextBlock.Text = "Export not available";
                 StatusSubtitleTextBlock.Text = ex.Message;
 
                 MessageBox.Show(ex.Message, "Generate", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
-                StatusTitleTextBlock.Text = "Generation failed";
+                StatusTitleTextBlock.Text = "Export failed";
                 StatusSubtitleTextBlock.Text = ex.Message;
 
                 MessageBox.Show(
-                    $"An error occurred while generating the recipe.\n\n{ex.Message}",
+                    $"An error occurred while exporting the FMOD Studio script.\n\n{ex.Message}",
                     "Generate",
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);
             }
         }
 
-        private GenerationRecipe BuildRecipeForSelectedBlueprint(BlueprintDefinition selected)
+        private string GetSuggestedFmodScriptFileName(BlueprintDefinition selected)
         {
             if (string.Equals(selected.Key, "footsteps", StringComparison.OrdinalIgnoreCase))
             {
-                return _footstepsBlueprintGenerator.Generate(selected, _footstepsOptions);
+                return $"footsteps_{_footstepsOptions.NamingPrefix}_fmod.js";
             }
 
-            throw new NotSupportedException(
-                $"The blueprint '{selected.Name}' is not implemented yet. Footsteps Starter is the first real generator.");
-        }
-
-        private string GetSuggestedRecipeFileName(BlueprintDefinition selected)
-        {
-            if (string.Equals(selected.Key, "footsteps", StringComparison.OrdinalIgnoreCase))
-            {
-                return $"{selected.Key}_{_footstepsOptions.NamingPrefix}_recipe.json";
-            }
-
-            return $"{selected.Key}_recipe.json";
+            return $"{selected.Key}_fmod.js";
         }
 
         private void RefreshBlueprintLibrary()
@@ -594,7 +584,7 @@ namespace ForgeBlueprint
                 ? "Character"
                 : char.ToUpperInvariant(prefix[0]) + prefix.Substring(1);
 
-                List<string> items = new()
+            List<string> items = new()
             {
                 $"Event: Footsteps_{displayPrefix}",
                 $"Spatial setup: {_footstepsOptions.SpatialMode}",
@@ -603,12 +593,12 @@ namespace ForgeBlueprint
                 $"Naming guide: foot_{prefix}_{{surface}}_var##"
             };
 
-                    if (_footstepsOptions.IncludeGear)
-                    {
-                        items.Add("Companion logic track: Gear / Cloth");
-                    }
+            if (_footstepsOptions.IncludeGear)
+            {
+                items.Add("Companion logic track: Gear / Cloth");
+            }
 
-                return items;
+            return items;
         }
 
         private List<string> BuildFootstepsNotes()
