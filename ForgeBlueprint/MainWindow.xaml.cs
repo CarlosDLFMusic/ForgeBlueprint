@@ -590,21 +590,25 @@ namespace ForgeBlueprint
         private List<string> BuildFootstepsGeneratedItems()
         {
             string prefix = _footstepsOptions.NamingPrefix;
-            List<string> items = new()
+            string displayPrefix = string.IsNullOrWhiteSpace(prefix)
+                ? "Character"
+                : char.ToUpperInvariant(prefix[0]) + prefix.Substring(1);
+
+                List<string> items = new()
             {
-                $"Event: ev_{prefix}_footsteps",
+                $"Event: Footsteps_{displayPrefix}",
                 $"Spatial setup: {_footstepsOptions.SpatialMode}",
-                "Parameter: Surfaces",
-                $"Logic tracks: {string.Join(", ", _footstepsOptions.GetSurfaceNames())}",
-                $"Naming guide: foot_{prefix}_surface_var##"
+                "Surface parameter: Surfaces",
+                $"Surface logic tracks: {string.Join(", ", _footstepsOptions.GetSurfaceNames())}",
+                $"Naming guide: foot_{prefix}_{{surface}}_var##"
             };
 
-            if (_footstepsOptions.IncludeGear)
-            {
-                items.Add("Companion track: Gear / Cloth");
-            }
+                    if (_footstepsOptions.IncludeGear)
+                    {
+                        items.Add("Companion logic track: Gear / Cloth");
+                    }
 
-            return items;
+                return items;
         }
 
         private List<string> BuildFootstepsNotes()

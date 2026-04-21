@@ -85,20 +85,22 @@ namespace ForgeBlueprint.Services
 
         private static List<GeneratedEvent> BuildEvents(string prefix, FootstepsBlueprintOptions options)
         {
-            string purpose = options.IncludeGear
-                ? "Single footsteps event driven by the Surfaces parameter, with an additional gear / cloth companion logic track."
-                : "Single footsteps event driven by the Surfaces parameter, with one dedicated logic track per surface.";
+                string displayPrefix = string.IsNullOrWhiteSpace(prefix)
+                        ? "Character"
+                        : char.ToUpperInvariant(prefix[0]) + prefix.Substring(1);
 
-            return new List<GeneratedEvent>
-            {
-                new GeneratedEvent
-                {
-                    Path = $"event:/characters/{prefix}/footsteps/ev_{prefix}_footsteps",
-                    SpatialMode = options.SpatialMode,
-                    Purpose = purpose,
-                    TriggerSuggestion = "Drive with animation notifies or gameplay movement callbacks."
-                }
-            };
+                    List<GeneratedEvent> events = new()
+                    {
+                    new GeneratedEvent
+                    {
+                        Path = $"event:/characters/{prefix}/footsteps/Footsteps_{displayPrefix}",
+                        SpatialMode = options.SpatialMode,
+                        Purpose = "Single master footsteps event driven by the Surfaces parameter, with one logic track per surface.",
+                        TriggerSuggestion = "Drive from animation notifies or gameplay movement callbacks, setting the Surfaces parameter before playback."
+                    }
+                 };
+
+            return events;
         }
 
         private static List<GeneratedBus> BuildBuses()
@@ -169,18 +171,23 @@ namespace ForgeBlueprint.Services
 
         private static List<string> BuildNextSteps(string prefix, FootstepsBlueprintOptions options)
         {
-            List<string> steps = new()
+            string displayPrefix = string.IsNullOrWhiteSpace(prefix)
+                ? "Character"
+                : char.ToUpperInvariant(prefix[0]) + prefix.Substring(1);
+
+                    List<string> steps = new()
             {
-                $"Create the FMOD event shell using the naming prefix '{prefix}'.",
-                "Add a discrete Surfaces parameter with values for Concrete, Dirt, Grass, Rock, Wood, Snow, Sand, Mud and Water.",
-                "Create one logic track per surface and place the corresponding multi instrument and random variations on each track.",
+                $"Create the FMOD event shell as Footsteps_{displayPrefix}.",
+                "Add one logic track per surface controlled by the Surfaces parameter.",
+                "Place a multi instrument with variation-ready assets inside each surface track.",
+                $"Name assets using the guide foot_{prefix}_{{surface}}_var##.",
                 "Connect the gameplay side through animation notifies, traces or movement callbacks.",
                 "Validate the routing and mix level against the rest of the character SFX."
             };
 
             if (options.IncludeGear)
             {
-                steps.Add("Add a dedicated gear / cloth companion track that can layer on top of any surface trigger.");
+                steps.Add("Add a companion Gear / Cloth logic track inside the same event.");
             }
 
             return steps;
