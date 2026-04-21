@@ -64,13 +64,37 @@ namespace ForgeBlueprint.Services
             sb.AppendLine("    }");
             sb.AppendLine();
 
+            sb.AppendLine("    function findChildBus(name, parentBus) {");
+            sb.AppendLine("        var buses = studio.project.model.MixerGroup.findInstances();");
+            sb.AppendLine("        for (var i = 0; i < buses.length; i++) {");
+            sb.AppendLine("            if (buses[i].name === name && buses[i].output === parentBus) {");
+            sb.AppendLine("                return buses[i];");
+            sb.AppendLine("            }");
+            sb.AppendLine("        }");
+            sb.AppendLine("        return null;");
+            sb.AppendLine("    }");
+            sb.AppendLine();
+
+            sb.AppendLine("    function ensureBus(name, parentBus) {");
+            sb.AppendLine("        var existing = findChildBus(name, parentBus);");
+            sb.AppendLine("        if (existing) {");
+            sb.AppendLine("            return existing;");
+            sb.AppendLine("        }");
+            sb.AppendLine();
+            sb.AppendLine("        var bus = studio.project.create('MixerGroup');");
+            sb.AppendLine("        bus.name = name;");
+            sb.AppendLine("        bus.output = parentBus;");
+            sb.AppendLine("        return bus;");
+            sb.AppendLine("    }");
+            sb.AppendLine();
+
             sb.AppendLine("    function addSurfaceTracks(eventObject) {");
             sb.AppendLine("        for (var i = 0; i < surfaces.length; i++) {");
             sb.AppendLine("            eventObject.addGroupTrack(surfaces[i]);");
             sb.AppendLine("        }");
             sb.AppendLine();
             sb.AppendLine("        if (includeGear) {");
-            sb.AppendLine("            eventObject.addGroupTrack('Gear_Cloth');");
+            sb.AppendLine("            eventObject.addGroupTrack('Gear');");
             sb.AppendLine("        }");
             sb.AppendLine("    }");
             sb.AppendLine();
@@ -79,6 +103,10 @@ namespace ForgeBlueprint.Services
             sb.AppendLine("        var charactersFolder = ensureEventFolder('Characters', studio.project.workspace.masterEventFolder);");
             sb.AppendLine("        var characterFolder = ensureEventFolder(displayPrefix, charactersFolder);");
             sb.AppendLine("        var footstepsFolder = ensureEventFolder('Footsteps', characterFolder);");
+            sb.AppendLine();
+            sb.AppendLine("        var sfxBus = ensureBus('SFX', studio.project.workspace.mixer.masterBus);");
+            sb.AppendLine("        var charactersBus = ensureBus('Characters', sfxBus);");
+            sb.AppendLine("        var footstepsBus = ensureBus('Footsteps', charactersBus);");
             sb.AppendLine();
             sb.AppendLine("        var existingEvent = findEvent(eventName, footstepsFolder);");
             sb.AppendLine("        if (existingEvent) {");
@@ -90,6 +118,7 @@ namespace ForgeBlueprint.Services
             sb.AppendLine("        var eventObject = studio.project.create('Event');");
             sb.AppendLine("        eventObject.name = eventName;");
             sb.AppendLine("        eventObject.folder = footstepsFolder;");
+            sb.AppendLine("        eventObject.mixerInput.output = footstepsBus;");
             sb.AppendLine();
             sb.AppendLine("        if (spatialMode === '3D') {");
             sb.AppendLine("            try {");
@@ -122,7 +151,7 @@ namespace ForgeBlueprint.Services
             sb.AppendLine("        }");
             sb.AppendLine();
             sb.AppendLine("        studio.window.navigateTo(eventObject);");
-            sb.AppendLine("        alert('Created ' + eventName + ' with a Surfaces parameter and ' + surfaces.length + ' surface tracks' + (includeGear ? ' plus Gear_Cloth.' : '.'));");
+            sb.AppendLine("        alert('Created ' + eventName + ' and routed it to bus:/SFX/Characters/Footsteps with a Surfaces parameter and ' + surfaces.length + ' surface tracks' + (includeGear ? ' plus Gear.' : '.'));");
             sb.AppendLine("    }");
             sb.AppendLine();
 

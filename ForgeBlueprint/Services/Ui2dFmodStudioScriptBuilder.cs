@@ -31,6 +31,7 @@ namespace ForgeBlueprint.Services
             sb.AppendLine("(function () {");
             sb.AppendLine($"    var eventNames = {JsArray(eventNames)};");
             sb.AppendLine();
+
             sb.AppendLine("    function ensureEventFolder(name, parentFolder) {");
             sb.AppendLine("        var folders = studio.project.model.EventFolder.findInstances();");
             sb.AppendLine("        for (var i = 0; i < folders.length; i++) {");
@@ -45,6 +46,7 @@ namespace ForgeBlueprint.Services
             sb.AppendLine("        return folder;");
             sb.AppendLine("    }");
             sb.AppendLine();
+
             sb.AppendLine("    function findEvent(name, folder) {");
             sb.AppendLine("        var events = studio.project.model.Event.findInstances();");
             sb.AppendLine("        for (var i = 0; i < events.length; i++) {");
@@ -55,8 +57,35 @@ namespace ForgeBlueprint.Services
             sb.AppendLine("        return null;");
             sb.AppendLine("    }");
             sb.AppendLine();
+
+            sb.AppendLine("    function findChildBus(name, parentBus) {");
+            sb.AppendLine("        var buses = studio.project.model.MixerGroup.findInstances();");
+            sb.AppendLine("        for (var i = 0; i < buses.length; i++) {");
+            sb.AppendLine("            if (buses[i].name === name && buses[i].output === parentBus) {");
+            sb.AppendLine("                return buses[i];");
+            sb.AppendLine("            }");
+            sb.AppendLine("        }");
+            sb.AppendLine("        return null;");
+            sb.AppendLine("    }");
+            sb.AppendLine();
+
+            sb.AppendLine("    function ensureBus(name, parentBus) {");
+            sb.AppendLine("        var existing = findChildBus(name, parentBus);");
+            sb.AppendLine("        if (existing) {");
+            sb.AppendLine("            return existing;");
+            sb.AppendLine("        }");
+            sb.AppendLine();
+            sb.AppendLine("        var bus = studio.project.create('MixerGroup');");
+            sb.AppendLine("        bus.name = name;");
+            sb.AppendLine("        bus.output = parentBus;");
+            sb.AppendLine("        return bus;");
+            sb.AppendLine("    }");
+            sb.AppendLine();
+
             sb.AppendLine("    function buildUiEvents() {");
             sb.AppendLine("        var uiFolder = ensureEventFolder('UI', studio.project.workspace.masterEventFolder);");
+            sb.AppendLine("        var uiBus = ensureBus('UI', studio.project.workspace.mixer.masterBus);");
+            sb.AppendLine();
             sb.AppendLine("        var createdEvents = [];");
             sb.AppendLine("        var skippedEvents = [];");
             sb.AppendLine();
@@ -71,6 +100,7 @@ namespace ForgeBlueprint.Services
             sb.AppendLine("            var eventObject = studio.project.create('Event');");
             sb.AppendLine("            eventObject.name = currentName;");
             sb.AppendLine("            eventObject.folder = uiFolder;");
+            sb.AppendLine("            eventObject.mixerInput.output = uiBus;");
             sb.AppendLine("            createdEvents.push(currentName);");
             sb.AppendLine("        }");
             sb.AppendLine();
@@ -81,7 +111,7 @@ namespace ForgeBlueprint.Services
             sb.AppendLine("            return;");
             sb.AppendLine("        }");
             sb.AppendLine();
-            sb.AppendLine("        var message = 'Created ' + createdEvents.length + ' UI events in /UI:\\n- ' + createdEvents.join('\\n- ');");
+            sb.AppendLine("        var message = 'Created ' + createdEvents.length + ' UI events in /UI and routed them to bus:/UI:\\n- ' + createdEvents.join('\\n- ');");
             sb.AppendLine("        if (skippedEvents.length > 0) {");
             sb.AppendLine("            message += '\\n\\nSkipped existing events:\\n- ' + skippedEvents.join('\\n- ');");
             sb.AppendLine("        }");
