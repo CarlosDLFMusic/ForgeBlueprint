@@ -20,12 +20,13 @@ namespace ForgeBlueprint
         private readonly BlueprintLibraryService _blueprintLibraryService = new();
         private readonly FmodStudioScriptExportService _fmodStudioScriptExportService = new();
         private readonly PresetService _presetService = new();
-        private readonly FootstepsBlueprintGenerator _footstepsBlueprintGenerator = new();
         private readonly FootstepsBlueprintOptions _footstepsOptions = new();
+        private readonly Ui2dBlueprintOptions _ui2dOptions = new();
 
         private List<BlueprintDefinition> _allBlueprints = new();
         private string _activeFilter = "All";
         private bool _isUpdatingFootstepsUi;
+        private bool _isUpdatingUi2dUi;
 
         public MainWindow()
         {
@@ -34,6 +35,7 @@ namespace ForgeBlueprint
             _allBlueprints = _blueprintLibraryService.GetBlueprints();
 
             InitializeFootstepsControls();
+            InitializeUi2dControls();
             UpdateThemeUi();
             ApplyFilterButtonStates();
             RefreshBlueprintLibrary();
@@ -67,6 +69,11 @@ namespace ForgeBlueprint
             LoadFootstepsControlsIntoUi();
         }
 
+        private void InitializeUi2dControls()
+        {
+            LoadUi2dControlsIntoUi();
+        }
+
         private void LoadFootstepsControlsIntoUi()
         {
             _isUpdatingFootstepsUi = true;
@@ -80,6 +87,26 @@ namespace ForgeBlueprint
             finally
             {
                 _isUpdatingFootstepsUi = false;
+            }
+        }
+
+        private void LoadUi2dControlsIntoUi()
+        {
+            _isUpdatingUi2dUi = true;
+
+            try
+            {
+                IncludeHoverCheckBox.IsChecked = _ui2dOptions.IncludeHover;
+                IncludePressCheckBox.IsChecked = _ui2dOptions.IncludePress;
+                IncludeBackCheckBox.IsChecked = _ui2dOptions.IncludeBack;
+                IncludeCancelCheckBox.IsChecked = _ui2dOptions.IncludeCancel;
+                IncludeConfirmCheckBox.IsChecked = _ui2dOptions.IncludeConfirm;
+                IncludeSelectCheckBox.IsChecked = _ui2dOptions.IncludeSelect;
+                AdditionalUiEventsTextBox.Text = _ui2dOptions.AdditionalEventsText;
+            }
+            finally
+            {
+                _isUpdatingUi2dUi = false;
             }
         }
 
@@ -116,13 +143,16 @@ namespace ForgeBlueprint
             ApplyFilterButtonStates();
         }
 
-
         private void LoadPresetButton_Click(object sender, RoutedEventArgs e)
         {
             try
             {
-                string presetsFolder = _presetService.GetBlueprintPresetsFolderPath("footsteps");
-                Directory.CreateDirectory(presetsFolder);
+                string selectedKey = (BlueprintListBox.SelectedItem as BlueprintDefinition)?.Key ?? string.Empty;
+                string initialFolder = string.Equals(selectedKey, "ui2d", StringComparison.OrdinalIgnoreCase)
+                    ? _presetService.GetBlueprintPresetsFolderPath("ui2d")
+                    : _presetService.GetBlueprintPresetsFolderPath("footsteps");
+
+                Directory.CreateDirectory(initialFolder);
 
                 OpenFileDialog dialog = new OpenFileDialog
                 {
@@ -130,7 +160,7 @@ namespace ForgeBlueprint
                     Filter = "JSON files (*.json)|*.json|All files (*.*)|*.*",
                     DefaultExt = ".json",
                     CheckFileExists = true,
-                    InitialDirectory = presetsFolder
+                    InitialDirectory = initialFolder
                 };
 
                 bool? result = dialog.ShowDialog(this);
@@ -141,31 +171,8 @@ namespace ForgeBlueprint
                     return;
                 }
 
-                BlueprintDefinition? footstepsBlueprint = _allBlueprints.FirstOrDefault(item =>
-                    string.Equals(item.Key, "footsteps", StringComparison.OrdinalIgnoreCase));
-
-                if (footstepsBlueprint == null)
-                    throw new InvalidOperationException("Footsteps Starter blueprint was not found in the library.");
-
-                if (!string.Equals((BlueprintListBox.SelectedItem as BlueprintDefinition)?.Key, "footsteps", StringComparison.OrdinalIgnoreCase))
-                {
-                    BlueprintListBox.SelectedItem = footstepsBlueprint;
-                }
-
-                bool loaded = TryLoadFootstepsPresetFromFile(dialog.FileName);
-                if (!loaded)
-                {
-                    StatusTitleTextBlock.Text = "Preset not loaded";
-                    StatusSubtitleTextBlock.Text = "The selected file is not a valid Footsteps preset.";
-
-                    MessageBox.Show(
-                        "The selected file is not a valid Footsteps preset.",
-                        "Load Preset",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Warning);
-
-                    return;
-                }
+                BlueprintPreset preset = _presetService.LoadPreset(dialog.FileName);
+                ApplyPreset(preset);
 
                 StatusTitleTextBlock.Text = "Preset loaded";
                 StatusSubtitleTextBlock.Text = Path.GetFileName(dialog.FileName);
@@ -262,8 +269,13 @@ namespace ForgeBlueprint
                 return _presetService.CreateFootstepsPreset(selected, _footstepsOptions, GetSuggestedFootstepsPresetName());
             }
 
+            if (string.Equals(selected.Key, "ui2d", StringComparison.OrdinalIgnoreCase))
+            {
+                return _presetService.CreateUi2dPreset(selected, _ui2dOptions, GetSuggestedUi2dPresetName());
+            }
+
             throw new NotSupportedException(
-                $"The blueprint '{selected.Name}' does not support presets yet. Footsteps Starter is the first preset-enabled blueprint.");
+                $"The blueprint '{selected.Name}' does not support presets yet.");
         }
 
         private string GetSuggestedFootstepsPresetName()
@@ -275,19 +287,34 @@ namespace ForgeBlueprint
             return $"footsteps_{prefix}";
         }
 
-        private bool TryLoadFootstepsPresetFromFile(string filePath)
+        private string GetSuggestedUi2dPresetName()
         {
-            BlueprintPreset preset = _presetService.LoadPreset(filePath);
+            return "ui2d_default";
+        }
 
-            if (!string.Equals(preset.BlueprintKey, "footsteps", StringComparison.OrdinalIgnoreCase))
-                throw new InvalidOperationException("This preset does not belong to Footsteps Starter.");
+        private void ApplyPreset(BlueprintPreset preset)
+        {
+            if (string.Equals(preset.BlueprintKey, "footsteps", StringComparison.OrdinalIgnoreCase))
+            {
+                if (preset.FootstepsOptions == null)
+                    throw new InvalidOperationException("The preset file does not contain footsteps options.");
 
-            if (preset.FootstepsOptions == null)
-                throw new InvalidOperationException("The preset file does not contain footsteps options.");
+                EnsureBlueprintSelected("footsteps");
+                ApplyFootstepsPreset(preset.FootstepsOptions);
+                return;
+            }
 
-            EnsureBlueprintSelected("footsteps");
-            ApplyFootstepsPreset(preset.FootstepsOptions);
-            return true;
+            if (string.Equals(preset.BlueprintKey, "ui2d", StringComparison.OrdinalIgnoreCase))
+            {
+                if (preset.Ui2dOptions == null)
+                    throw new InvalidOperationException("The preset file does not contain UI 2D options.");
+
+                EnsureBlueprintSelected("ui2d");
+                ApplyUi2dPreset(preset.Ui2dOptions);
+                return;
+            }
+
+            throw new InvalidOperationException($"This preset does not belong to a supported blueprint: {preset.BlueprintKey}.");
         }
 
         private void EnsureBlueprintSelected(string blueprintKey)
@@ -320,6 +347,23 @@ namespace ForgeBlueprint
 
             LoadFootstepsControlsIntoUi();
             UpdateFootstepsPreview();
+        }
+
+        private void ApplyUi2dPreset(Ui2dBlueprintOptions options)
+        {
+            if (options == null)
+                throw new ArgumentNullException(nameof(options));
+
+            _ui2dOptions.IncludeHover = options.IncludeHover;
+            _ui2dOptions.IncludePress = options.IncludePress;
+            _ui2dOptions.IncludeBack = options.IncludeBack;
+            _ui2dOptions.IncludeCancel = options.IncludeCancel;
+            _ui2dOptions.IncludeConfirm = options.IncludeConfirm;
+            _ui2dOptions.IncludeSelect = options.IncludeSelect;
+            _ui2dOptions.AdditionalEventsText = options.AdditionalEventsText ?? string.Empty;
+
+            LoadUi2dControlsIntoUi();
+            UpdateUi2dPreview();
         }
 
         private void GenerateButton_Click(object sender, RoutedEventArgs e)
@@ -357,7 +401,7 @@ namespace ForgeBlueprint
                     return;
                 }
 
-                _fmodStudioScriptExportService.ExportScript(selected, _footstepsOptions, dialog.FileName);
+                _fmodStudioScriptExportService.ExportScript(selected, _footstepsOptions, _ui2dOptions, dialog.FileName);
 
                 string exportFolder = Path.GetDirectoryName(dialog.FileName) ?? string.Empty;
                 if (!string.IsNullOrWhiteSpace(exportFolder))
@@ -404,6 +448,11 @@ namespace ForgeBlueprint
             if (string.Equals(selected.Key, "footsteps", StringComparison.OrdinalIgnoreCase))
             {
                 return $"footsteps_{_footstepsOptions.NamingPrefix}_fmod.js";
+            }
+
+            if (string.Equals(selected.Key, "ui2d", StringComparison.OrdinalIgnoreCase))
+            {
+                return "ui_2d_fmod.js";
             }
 
             return $"{selected.Key}_fmod.js";
@@ -472,6 +521,7 @@ namespace ForgeBlueprint
                 NotesListBox.ItemsSource = null;
 
                 SetFootstepsConfiguratorEnabled(false);
+                SetUi2dConfiguratorEnabled(false);
 
                 StatusTitleTextBlock.Text = "Ready";
                 StatusSubtitleTextBlock.Text = "Select a blueprint to continue.";
@@ -489,15 +539,27 @@ namespace ForgeBlueprint
             if (string.Equals(blueprint.Key, "footsteps", StringComparison.OrdinalIgnoreCase))
             {
                 SetFootstepsConfiguratorEnabled(true);
+                SetUi2dConfiguratorEnabled(false);
                 LoadFootstepsControlsIntoUi();
                 UpdateFootstepsPreview();
 
                 StatusTitleTextBlock.Text = blueprint.Name;
                 StatusSubtitleTextBlock.Text = "Footsteps blueprint is now configurable.";
             }
+            else if (string.Equals(blueprint.Key, "ui2d", StringComparison.OrdinalIgnoreCase))
+            {
+                SetFootstepsConfiguratorEnabled(false);
+                SetUi2dConfiguratorEnabled(true);
+                LoadUi2dControlsIntoUi();
+                UpdateUi2dPreview();
+
+                StatusTitleTextBlock.Text = blueprint.Name;
+                StatusSubtitleTextBlock.Text = "UI 2D blueprint is now configurable.";
+            }
             else
             {
                 SetFootstepsConfiguratorEnabled(false);
+                SetUi2dConfiguratorEnabled(false);
 
                 OptionsListBox.ItemsSource = blueprint.StaticOptions;
                 GeneratedItemsListBox.ItemsSource = blueprint.StaticGeneratedItems;
@@ -510,11 +572,24 @@ namespace ForgeBlueprint
 
         private void SetFootstepsConfiguratorEnabled(bool isEnabled)
         {
+            FootstepsConfiguratorCard.Visibility = isEnabled ? Visibility.Visible : Visibility.Collapsed;
             FootstepsConfiguratorCard.IsEnabled = isEnabled;
-            FootstepsConfiguratorCard.Opacity = isEnabled ? 1.0 : 0.55;
+            FootstepsConfiguratorCard.Opacity = 1.0;
+
             FootstepsConfiguratorHintTextBlock.Text = isEnabled
                 ? "These controls update the Footsteps Starter preview in real time."
                 : "Select Footsteps Starter to enable this configuration panel.";
+        }
+
+        private void SetUi2dConfiguratorEnabled(bool isEnabled)
+        {
+            Ui2dConfiguratorCard.Visibility = isEnabled ? Visibility.Visible : Visibility.Collapsed;
+            Ui2dConfiguratorCard.IsEnabled = isEnabled;
+            Ui2dConfiguratorCard.Opacity = 1.0;
+
+            Ui2dConfiguratorHintTextBlock.Text = isEnabled
+                ? "These controls update the UI 2D Starter preview in real time."
+                : "Select UI 2D Starter to enable this configuration panel.";
         }
 
         private void FootstepsControl_Changed(object sender, RoutedEventArgs e)
@@ -614,6 +689,94 @@ namespace ForgeBlueprint
             else
             {
                 notes.Add("Gear / cloth remains disabled, so only the surface logic tracks are represented.");
+            }
+
+            return notes;
+        }
+
+        private void Ui2dControl_Changed(object sender, RoutedEventArgs e)
+        {
+            RefreshUi2dStateFromUi();
+        }
+
+        private void AdditionalUiEventsTextBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            RefreshUi2dStateFromUi();
+        }
+
+        private void RefreshUi2dStateFromUi()
+        {
+            if (_isUpdatingUi2dUi)
+                return;
+
+            BlueprintDefinition? selected = BlueprintListBox.SelectedItem as BlueprintDefinition;
+            if (selected == null || !string.Equals(selected.Key, "ui2d", StringComparison.OrdinalIgnoreCase))
+                return;
+
+            _ui2dOptions.IncludeHover = IncludeHoverCheckBox.IsChecked == true;
+            _ui2dOptions.IncludePress = IncludePressCheckBox.IsChecked == true;
+            _ui2dOptions.IncludeBack = IncludeBackCheckBox.IsChecked == true;
+            _ui2dOptions.IncludeCancel = IncludeCancelCheckBox.IsChecked == true;
+            _ui2dOptions.IncludeConfirm = IncludeConfirmCheckBox.IsChecked == true;
+            _ui2dOptions.IncludeSelect = IncludeSelectCheckBox.IsChecked == true;
+            _ui2dOptions.AdditionalEventsText = AdditionalUiEventsTextBox.Text ?? string.Empty;
+
+            UpdateUi2dPreview();
+
+            StatusTitleTextBlock.Text = "UI 2D Starter";
+            StatusSubtitleTextBlock.Text = "Preview updated from the current UI 2D settings.";
+        }
+
+        private void UpdateUi2dPreview()
+        {
+            OptionsListBox.ItemsSource = BuildUi2dOptionSummary();
+            GeneratedItemsListBox.ItemsSource = BuildUi2dGeneratedItems();
+            NotesListBox.ItemsSource = BuildUi2dNotes();
+        }
+
+        private List<string> BuildUi2dOptionSummary()
+        {
+            List<string> baseEvents = _ui2dOptions.GetBaseEventNames();
+            List<string> additionalEvents = _ui2dOptions.GetAdditionalEventNames();
+
+            return new List<string>
+            {
+                "Spatial model: 2D only",
+                "Event folder: UI",
+                $"Base events: {(baseEvents.Count > 0 ? string.Join(", ", baseEvents) : "none")}",
+                $"Additional events: {(additionalEvents.Count > 0 ? string.Join(", ", additionalEvents) : "none")}",
+                $"Total events to create: {_ui2dOptions.GetAllEventNames().Count}"
+            };
+        }
+
+        private List<string> BuildUi2dGeneratedItems()
+        {
+            List<string> items = new() { "Folder: UI" };
+
+            foreach (string eventName in _ui2dOptions.GetAllEventNames())
+            {
+                items.Add($"Event: event:/UI/{eventName}");
+            }
+
+            return items;
+        }
+
+        private List<string> BuildUi2dNotes()
+        {
+            List<string> notes = new()
+            {
+                "This blueprint exports a 2D UI folder in FMOD with one event per selected UI action.",
+                "Hover, Press, Back, Cancel, Confirm and Select are available as the default base set.",
+                "Any additional UI events are exported exactly as typed, after trimming empty entries and removing duplicates."
+            };
+
+            if (_ui2dOptions.GetAllEventNames().Count == 0)
+            {
+                notes.Add("Select at least one base event or add a custom UI event before exporting.");
+            }
+            else
+            {
+                notes.Add("Use the additional events field to add project-specific UI actions without editing the blueprint code.");
             }
 
             return notes;

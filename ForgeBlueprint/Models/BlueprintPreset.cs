@@ -10,6 +10,8 @@ namespace ForgeBlueprint.Models
         public string BlueprintType { get; set; } = "";
         public string Middleware { get; set; } = "";
         public DateTime SavedAtUtc { get; set; } = DateTime.UtcNow;
+
         public FootstepsBlueprintOptions? FootstepsOptions { get; set; }
+        public Ui2dBlueprintOptions? Ui2dOptions { get; set; }
     }
 }

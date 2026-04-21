@@ -28,7 +28,6 @@ namespace ForgeBlueprint.Services
         {
             if (blueprint == null)
                 throw new ArgumentNullException(nameof(blueprint));
-
             if (options == null)
                 throw new ArgumentNullException(nameof(options));
 
@@ -44,11 +43,29 @@ namespace ForgeBlueprint.Services
             };
         }
 
+        public BlueprintPreset CreateUi2dPreset(BlueprintDefinition blueprint, Ui2dBlueprintOptions options, string presetName)
+        {
+            if (blueprint == null)
+                throw new ArgumentNullException(nameof(blueprint));
+            if (options == null)
+                throw new ArgumentNullException(nameof(options));
+
+            return new BlueprintPreset
+            {
+                PresetName = string.IsNullOrWhiteSpace(presetName) ? "ui2d_preset" : presetName.Trim(),
+                BlueprintKey = blueprint.Key,
+                BlueprintName = blueprint.Name,
+                BlueprintType = blueprint.BlueprintType,
+                Middleware = blueprint.Middleware,
+                SavedAtUtc = DateTime.UtcNow,
+                Ui2dOptions = CloneUi2dOptions(options)
+            };
+        }
+
         public void SavePreset(BlueprintPreset preset, string filePath)
         {
             if (preset == null)
                 throw new ArgumentNullException(nameof(preset));
-
             if (string.IsNullOrWhiteSpace(filePath))
                 throw new ArgumentException("Preset path cannot be empty.", nameof(filePath));
 
@@ -66,7 +83,6 @@ namespace ForgeBlueprint.Services
         {
             if (string.IsNullOrWhiteSpace(filePath))
                 throw new ArgumentException("Preset path cannot be empty.", nameof(filePath));
-
             if (!File.Exists(filePath))
                 throw new FileNotFoundException("Preset file was not found.", filePath);
 
@@ -93,6 +109,20 @@ namespace ForgeBlueprint.Services
                 SpatialMode = options.SpatialMode,
                 NamingPrefix = options.NamingPrefix,
                 IncludeGear = options.IncludeGear
+            };
+        }
+
+        private static Ui2dBlueprintOptions CloneUi2dOptions(Ui2dBlueprintOptions options)
+        {
+            return new Ui2dBlueprintOptions
+            {
+                IncludeHover = options.IncludeHover,
+                IncludePress = options.IncludePress,
+                IncludeBack = options.IncludeBack,
+                IncludeCancel = options.IncludeCancel,
+                IncludeConfirm = options.IncludeConfirm,
+                IncludeSelect = options.IncludeSelect,
+                AdditionalEventsText = options.AdditionalEventsText
             };
         }
 

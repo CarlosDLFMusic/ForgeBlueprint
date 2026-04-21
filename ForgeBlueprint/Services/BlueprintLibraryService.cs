@@ -28,28 +28,10 @@ namespace ForgeBlueprint.Services
                     BlueprintType = "System",
                     Middleware = "FMOD",
                     Category = "Interface",
-                    Summary = "Builds a clean 2D UI structure with common feedback categories for navigation, confirmations and warnings.",
-                    ImplementationGoal = "Give menus and HUD feedback a clean and reusable implementation shell from minute one.",
-                    PreviewLead = "This blueprint focuses on fast setup, consistency and naming order rather than complex audio logic.",
-                    StaticOptions = new List<string>
-                    {
-                        "2D event setup by default",
-                        "Menu / HUD / notification split",
-                        "Optional hover / click / back / confirm families",
-                        "Error and reward feedback placeholders"
-                    },
-                    StaticGeneratedItems = new List<string>
-                    {
-                        "Event group for buttons and menu interactions",
-                        "Notification category shell",
-                        "Errors / rewards / transitions structure",
-                        "UI naming convention starter"
-                    },
-                    StaticNotes = new List<string>
-                    {
-                        "Great quick-win blueprint.",
-                        "Very useful for almost every game genre."
-                    }
+                    Summary = "Creates a 2D UI event shell inside one UI folder, with toggles for the core navigation events and support for additional custom events.",
+                    ImplementationGoal = "Give menus and HUD feedback a fast FMOD starting point by exporting a ready-made UI folder with the selected 2D events.",
+                    PreviewLead = "This blueprint is focused on speed: select the standard UI events you need, add any extra ones, and export a clean FMOD UI template.",
+                    HasConfigurableOptions = true
                 },
                 new BlueprintDefinition
                 {

@@ -905,6 +905,7 @@
                         </Border>
 
                         <Border x:Name="FootstepsConfiguratorCard"
+                                Visibility="Collapsed"
                                 Style="{StaticResource CardBorderStyle}"
                                 IsEnabled="False"
                                 Opacity="0.55">
@@ -1070,6 +1071,107 @@
                                           Margin="0,0,0,0"
                                           Checked="FootstepsControl_Changed"
                                           Unchecked="FootstepsControl_Changed" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border x:Name="Ui2dConfiguratorCard"
+                                Visibility="Collapsed"
+                                Style="{StaticResource CardBorderStyle}"
+                                IsEnabled="False"
+                                Opacity="0.55">
+                            <StackPanel>
+                                <TextBlock Text="UI 2D Controls"
+                                           Style="{StaticResource SectionLabelStyle}" />
+
+                                <TextBlock x:Name="Ui2dConfiguratorHintTextBlock"
+                                           Text="Select UI 2D Starter to enable this configuration panel."
+                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                           Margin="0,0,0,14"
+                                           TextWrapping="Wrap" />
+
+                                <Border Background="{DynamicResource SurfaceBrush}"
+                                        BorderBrush="{DynamicResource BorderBrushCustom}"
+                                        BorderThickness="1"
+                                        CornerRadius="12"
+                                        Padding="14"
+                                        Margin="0,0,0,12">
+                                    <StackPanel>
+                                        <TextBlock Text="UI Folder"
+                                                   Style="{StaticResource SectionLabelStyle}" />
+                                        <TextBlock Text="UI"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}" />
+                                        <TextBlock Text="All events created by this blueprint are 2D."
+                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                   Margin="0,6,0,0"
+                                                   TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </Border>
+
+                                <Grid Margin="0,0,0,12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="14" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel Grid.Column="0">
+                                        <CheckBox x:Name="IncludeHoverCheckBox"
+                                                  Content="Hover"
+                                                  Style="{StaticResource ModernCheckBoxStyle}"
+                                                  Margin="0,0,0,8"
+                                                  Checked="Ui2dControl_Changed"
+                                                  Unchecked="Ui2dControl_Changed" />
+                                        <CheckBox x:Name="IncludePressCheckBox"
+                                                  Content="Press"
+                                                  Style="{StaticResource ModernCheckBoxStyle}"
+                                                  Margin="0,0,0,8"
+                                                  Checked="Ui2dControl_Changed"
+                                                  Unchecked="Ui2dControl_Changed" />
+                                        <CheckBox x:Name="IncludeBackCheckBox"
+                                                  Content="Back"
+                                                  Style="{StaticResource ModernCheckBoxStyle}"
+                                                  Margin="0,0,0,8"
+                                                  Checked="Ui2dControl_Changed"
+                                                  Unchecked="Ui2dControl_Changed" />
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Column="2">
+                                        <CheckBox x:Name="IncludeCancelCheckBox"
+                                                  Content="Cancel"
+                                                  Style="{StaticResource ModernCheckBoxStyle}"
+                                                  Margin="0,0,0,8"
+                                                  Checked="Ui2dControl_Changed"
+                                                  Unchecked="Ui2dControl_Changed" />
+                                        <CheckBox x:Name="IncludeConfirmCheckBox"
+                                                  Content="Confirm"
+                                                  Style="{StaticResource ModernCheckBoxStyle}"
+                                                  Margin="0,0,0,8"
+                                                  Checked="Ui2dControl_Changed"
+                                                  Unchecked="Ui2dControl_Changed" />
+                                        <CheckBox x:Name="IncludeSelectCheckBox"
+                                                  Content="Select"
+                                                  Style="{StaticResource ModernCheckBoxStyle}"
+                                                  Margin="0,0,0,8"
+                                                  Checked="Ui2dControl_Changed"
+                                                  Unchecked="Ui2dControl_Changed" />
+                                    </StackPanel>
+                                </Grid>
+
+                                <StackPanel>
+                                    <TextBlock Text="Additional UI Events"
+                                               Style="{StaticResource SectionLabelStyle}" />
+                                    <TextBlock Text="Add extra event names separated by commas or new lines."
+                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                               Margin="0,0,0,8"
+                                               TextWrapping="Wrap" />
+                                    <TextBox x:Name="AdditionalUiEventsTextBox"
+                                             Style="{StaticResource SearchTextBoxStyle}"
+                                             Height="84"
+                                             AcceptsReturn="True"
+                                             TextWrapping="Wrap"
+                                             VerticalScrollBarVisibility="Auto"
+                                             TextChanged="AdditionalUiEventsTextBox_TextChanged" />
+                                </StackPanel>
                             </StackPanel>
                         </Border>
 
